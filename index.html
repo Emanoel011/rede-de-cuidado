@@ -16,7 +16,7 @@
 </head>
 <body class="bg-[#F8FAF9]">
 
-    <!-- ====================== TELA DE LOGIN / CADASTRO ====================== -->
+    <!-- ====================== TELAS DE AUTENTICAÇÃO ====================== -->
     <div id="authScreen" class="min-h-screen flex items-center justify-center p-6">
         <div class="w-full max-w-[1100px] bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
 
@@ -39,117 +39,114 @@
 
                 <!-- LOGIN -->
                 <form id="loginForm" onsubmit="doLogin(event)" class="space-y-6">
-                    <h2 class="text-3xl font-fraunces text-[#1F2E2B]">Acesso ao Painel</h2>
-                    <p class="text-gray-600">Entre com suas credenciais.</p>
-
+                    <h2 class="text-3xl font-fraunces">Entrar</h2>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">E-mail Institucional</label>
-                        <input id="loginEmail" type="email" placeholder="exemplo@escola.edu.br" required 
-                               class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-[#2A7A64]">
+                        <input id="loginEmail" type="email" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64] focus:outline-none">
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                        <input id="loginPass" type="password" placeholder="••••••••" required 
-                               class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-[#2A7A64]">
+                        <input id="loginPass" type="password" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64] focus:outline-none">
                     </div>
-
-                    <button type="submit" 
-                            class="w-full bg-[#1A5444] hover:bg-[#2A7A64] text-white py-4 rounded-2xl font-semibold text-lg transition-all">
-                        Entrar no Sistema
-                    </button>
-
-                    <p class="text-center text-gray-600">
-                        Primeiro acesso? 
-                        <a onclick="switchView('register')" class="text-[#2A7A64] font-semibold hover:underline cursor-pointer">Cadastre-se</a>
-                    </p>
+                    <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Entrar</button>
+                    <div class="flex justify-between text-sm">
+                        <a onclick="switchView('register')" class="text-[#2A7A64] hover:underline cursor-pointer">Criar conta</a>
+                        <a onclick="switchView('recover')" class="text-[#2A7A64] hover:underline cursor-pointer">Esqueci a senha</a>
+                    </div>
                 </form>
 
                 <!-- CADASTRO -->
                 <form id="regForm" onsubmit="doRegister(event)" class="space-y-6 hidden">
-                    <h2 class="text-3xl font-fraunces text-[#1F2E2B]">Criar Nova Conta</h2>
-                    <p class="text-gray-600">Identifique-se na rede.</p>
-
+                    <h2 class="text-3xl font-fraunces">Criar Conta</h2>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
-                        <input id="regName" type="text" required 
-                               class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-[#2A7A64]">
+                        <input id="regName" type="text" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
-                            <input id="regEmail" type="email" required 
-                                   class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-[#2A7A64]">
+                            <input id="regEmail" type="email" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                            <input id="regPass" type="password" required 
-                                   class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-[#2A7A64]">
+                            <input id="regPass" type="password" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
                         </div>
                     </div>
+                    <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Criar Conta</button>
+                    <a onclick="switchView('login')" class="block text-center text-[#2A7A64] hover:underline cursor-pointer">Já tenho conta</a>
+                </form>
 
-                    <button type="submit" 
-                            class="w-full bg-[#1A5444] hover:bg-[#2A7A64] text-white py-4 rounded-2xl font-semibold text-lg transition-all">
-                        Criar Conta
-                    </button>
-
-                    <p class="text-center text-gray-600">
-                        Já tem uma conta? 
-                        <a onclick="switchView('login')" class="text-[#2A7A64] font-semibold hover:underline cursor-pointer">Voltar ao Login</a>
-                    </p>
+                <!-- ESQUECI A SENHA -->
+                <form id="recoverForm" onsubmit="doRecover(event)" class="space-y-6 hidden">
+                    <h2 class="text-3xl font-fraunces">Recuperar Senha</h2>
+                    <p class="text-gray-600">Digite seu e-mail para receber o link de recuperação.</p>
+                    <input id="recoverEmail" type="email" placeholder="seu@email.com" required 
+                           class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
+                    <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Enviar Link</button>
+                    <a onclick="switchView('login')" class="block text-center text-[#2A7A64] hover:underline cursor-pointer">Voltar ao Login</a>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- ====================== TELA DO SISTEMA (Table Editor) ====================== -->
+    <!-- ====================== TELA DO SISTEMA ====================== -->
     <div id="appScreen" class="hidden h-screen grid grid-cols-[280px_1fr] bg-[#0F1211] text-gray-200">
 
         <!-- Sidebar -->
         <div class="bg-[#1A1F1D] border-r border-[#2A3A35] p-6 flex flex-col">
             <div class="flex items-center gap-3 mb-10">
-                <div class="w-9 h-9 bg-[#2A7A64] text-white rounded-xl flex items-center justify-center font-bold text-xl">R</div>
+                <div class="w-9 h-9 bg-[#2A7A64] rounded-xl flex items-center justify-center font-bold">R</div>
                 <div class="font-fraunces text-xl">Rede de Cuidado</div>
             </div>
-
-            <nav class="space-y-1 flex-1">
-                <a onclick="loadTable()" class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#2A3A35] text-white">
-                    <i class='bx bx-table'></i>
-                    <span class="font-medium">public.registros</span>
-                </a>
+            
+            <nav class="space-y-1">
+                <a onclick="showDashboard()" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-[#2A3A35]"><i class='bx bx-home'></i> Painel Inicial</a>
+                <a onclick="loadTable()" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-[#2A3A35]"><i class='bx bx-table'></i> Registros</a>
             </nav>
 
-            <div class="pt-6 border-t border-[#2A3A35]">
-                <div class="text-xs text-gray-500 mb-1">Logado como</div>
+            <div class="mt-auto pt-6 border-t border-[#2A3A35]">
                 <div id="userName" class="font-semibold"></div>
-                <button onclick="doLogout()" class="mt-6 text-red-400 hover:text-red-500 text-sm flex items-center gap-2">
+                <button onclick="doLogout()" class="mt-4 text-red-400 hover:text-red-500 text-sm flex items-center gap-2">
                     <i class='bx bx-log-out'></i> Sair
                 </button>
             </div>
         </div>
 
-        <!-- Main Table -->
-        <div class="flex flex-col">
-            <div class="h-16 border-b border-[#2A3A35] flex items-center px-8 justify-between bg-[#1A1F1D]">
-                <h1 class="font-semibold text-lg">public.registros</h1>
-                <div class="flex items-center gap-4">
-                    <input id="searchInput" placeholder="Buscar..." 
-                           class="bg-[#252B28] border border-[#3A4A44] rounded-xl px-4 py-2 w-80 focus:outline-none">
-                    <button onclick="insertNewRow()" 
-                            class="bg-[#2A7A64] hover:bg-[#1F5A4A] px-6 py-2.5 rounded-xl flex items-center gap-2 font-medium">
-                        <i class='bx bx-plus'></i> Novo
-                    </button>
+        <!-- Main Content -->
+        <div class="overflow-auto">
+            <!-- Painel Inicial -->
+            <div id="dashboardScreen" class="p-10">
+                <h1 class="text-4xl font-fraunces text-white mb-8">Painel Inicial</h1>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-[#1A1F1D] p-6 rounded-3xl">
+                        <div class="text-emerald-400 text-4xl mb-2">342</div>
+                        <div class="text-gray-400">Alunos na Base</div>
+                    </div>
+                    <div class="bg-[#1A1F1D] p-6 rounded-3xl">
+                        <div class="text-emerald-400 text-4xl mb-2">18</div>
+                        <div class="text-gray-400">Profissionais Ativos</div>
+                    </div>
+                    <div class="bg-[#1A1F1D] p-6 rounded-3xl">
+                        <div class="text-emerald-400 text-4xl mb-2">87%</div>
+                        <div class="text-gray-400">Registros Atualizados</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-auto p-8">
+            <!-- Table Editor -->
+            <div id="tableScreen" class="hidden p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-semibold">public.registros</h1>
+                    <button onclick="insertNewRow()" class="bg-[#2A7A64] px-6 py-3 rounded-2xl flex items-center gap-2">
+                        <i class='bx bx-plus'></i> Novo Registro
+                    </button>
+                </div>
                 <table class="w-full">
-                    <thead class="bg-[#1F2522] sticky top-0">
+                    <thead class="bg-[#1F2522]">
                         <tr>
-                            <th class="text-left p-4 border-b border-[#2A3A35]">chave</th>
-                            <th class="text-left p-4 border-b border-[#2A3A35]">valor (JSON)</th>
-                            <th class="w-24 text-center p-4 border-b border-[#2A3A35]">Ações</th>
+                            <th class="text-left p-4">Chave</th>
+                            <th class="text-left p-4">Valor (JSON)</th>
+                            <th class="w-28 text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="text-sm"></tbody>
