@@ -16,7 +16,7 @@
 </head>
 <body class="bg-[#F8FAF9]">
 
-    <!-- ====================== TELAS DE AUTENTICAÇÃO ====================== -->
+    <!-- TELAS DE AUTENTICAÇÃO -->
     <div id="authScreen" class="min-h-screen flex items-center justify-center p-6">
         <div class="w-full max-w-[1100px] bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
 
@@ -50,7 +50,7 @@
                     </div>
                     <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Entrar</button>
                     <div class="flex justify-between text-sm">
-                        <a onclick="switchView('register')" class="text-[#2A7A64] hover:underline cursor-pointer">Criar conta</a>
+                        <a onclick="switchView('register')" class="text-[#2A7A64] hover:underline cursor-pointer">Cadastre-se</a>
                         <a onclick="switchView('recover')" class="text-[#2A7A64] hover:underline cursor-pointer">Esqueci a senha</a>
                     </div>
                 </form>
@@ -73,37 +73,33 @@
                         </div>
                     </div>
                     <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Criar Conta</button>
-                    <a onclick="switchView('login')" class="block text-center text-[#2A7A64] hover:underline cursor-pointer">Já tenho conta</a>
+                    <a onclick="switchView('login')" class="block text-center text-[#2A7A64] hover:underline cursor-pointer">Já tenho conta → Voltar</a>
                 </form>
 
-                <!-- ESQUECI A SENHA -->
+                <!-- RECUPERAR SENHA -->
                 <form id="recoverForm" onsubmit="doRecover(event)" class="space-y-6 hidden">
                     <h2 class="text-3xl font-fraunces">Recuperar Senha</h2>
-                    <p class="text-gray-600">Digite seu e-mail para receber o link de recuperação.</p>
-                    <input id="recoverEmail" type="email" placeholder="seu@email.com" required 
-                           class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
-                    <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Enviar Link</button>
+                    <p class="text-gray-600">Digite seu e-mail para receber o link.</p>
+                    <input id="recoverEmail" type="email" placeholder="seu@email.com" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
+                    <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Enviar Link de Recuperação</button>
                     <a onclick="switchView('login')" class="block text-center text-[#2A7A64] hover:underline cursor-pointer">Voltar ao Login</a>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- ====================== TELA DO SISTEMA ====================== -->
+    <!-- TELA DO SISTEMA -->
     <div id="appScreen" class="hidden h-screen grid grid-cols-[280px_1fr] bg-[#0F1211] text-gray-200">
-
         <!-- Sidebar -->
         <div class="bg-[#1A1F1D] border-r border-[#2A3A35] p-6 flex flex-col">
             <div class="flex items-center gap-3 mb-10">
                 <div class="w-9 h-9 bg-[#2A7A64] rounded-xl flex items-center justify-center font-bold">R</div>
                 <div class="font-fraunces text-xl">Rede de Cuidado</div>
             </div>
-            
             <nav class="space-y-1">
                 <a onclick="showDashboard()" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-[#2A3A35]"><i class='bx bx-home'></i> Painel Inicial</a>
                 <a onclick="loadTable()" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-[#2A3A35]"><i class='bx bx-table'></i> Registros</a>
             </nav>
-
             <div class="mt-auto pt-6 border-t border-[#2A3A35]">
                 <div id="userName" class="font-semibold"></div>
                 <button onclick="doLogout()" class="mt-4 text-red-400 hover:text-red-500 text-sm flex items-center gap-2">
@@ -112,7 +108,6 @@
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="overflow-auto">
             <!-- Painel Inicial -->
             <div id="dashboardScreen" class="p-10">
@@ -121,14 +116,6 @@
                     <div class="bg-[#1A1F1D] p-6 rounded-3xl">
                         <div class="text-emerald-400 text-4xl mb-2">342</div>
                         <div class="text-gray-400">Alunos na Base</div>
-                    </div>
-                    <div class="bg-[#1A1F1D] p-6 rounded-3xl">
-                        <div class="text-emerald-400 text-4xl mb-2">18</div>
-                        <div class="text-gray-400">Profissionais Ativos</div>
-                    </div>
-                    <div class="bg-[#1A1F1D] p-6 rounded-3xl">
-                        <div class="text-emerald-400 text-4xl mb-2">87%</div>
-                        <div class="text-gray-400">Registros Atualizados</div>
                     </div>
                 </div>
             </div>
