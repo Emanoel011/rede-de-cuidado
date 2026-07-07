@@ -5,23 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rede de Cuidado</title>
     
-    <!-- Fontes e Ícones -->
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
-    <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { fraunces: ['Fraunces', 'serif'], public: ['Public Sans', 'sans-serif'] }
-                }
-            }
+            theme: { extend: { fontFamily: { fraunces: ['Fraunces', 'serif'], public: ['Public Sans', 'sans-serif'] } } }
         }
     </script>
-    
-    <!-- Supabase via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-[#F4F7F6] text-[#1F2E2B] font-public m-0 h-screen overflow-hidden">
@@ -30,7 +22,6 @@
     <div id="authScreen" class="min-h-screen flex items-center justify-center p-6 bg-[#F4F7F6]">
         <div class="w-full max-w-[960px] bg-white rounded-[24px] grid grid-cols-1 md:grid-cols-2 overflow-hidden shadow-lg border border-[#E2E8E5]">
             
-            <!-- Lado Esquerdo Visual -->
             <div class="bg-gradient-to-br from-[#1A5444] to-[#2A7A64] text-white p-12 flex flex-col justify-between relative overflow-hidden hidden md:flex">
                 <div class="absolute -right-20 -bottom-20 w-80 h-80 rounded-full border border-white/10"></div>
                 <div class="relative z-10">
@@ -42,63 +33,82 @@
                 </div>
             </div>
 
-            <!-- Lado Direito Formulário -->
-            <div class="p-12 flex flex-col justify-center">
+            <div class="p-12 flex flex-col justify-center relative">
                 <div id="sysMsg" style="display: none;" class="p-4 rounded-xl text-sm font-medium mb-4 flex items-center gap-2"></div>
 
-                <!-- Formulário de Login -->
+                <!-- 1. FORMULÁRIO DE LOGIN -->
                 <form id="loginForm" onsubmit="doLogin(event)" class="flex flex-col">
                     <h2 class="text-3xl font-fraunces mb-2 text-[#1F2E2B]">Acesso ao Painel</h2>
                     <div class="text-[#63736E] text-sm mb-6">Entre com suas credenciais.</div>
                     
                     <div class="mb-4">
                         <label class="block text-xs font-semibold text-[#63736E] mb-2">E-mail Institucional</label>
-                        <input id="loginEmail" type="email" placeholder="exemplo@escola.edu.br" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
+                        <input id="loginEmail" type="email" placeholder="exemplo@escola.edu.br" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none focus:border-[#2A7A64]" />
                     </div>
-                    <div class="mb-6">
+                    <div class="mb-2">
                         <label class="block text-xs font-semibold text-[#63736E] mb-2">Senha</label>
-                        <input id="loginPass" type="password" placeholder="••••••••" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
+                        <input id="loginPass" type="password" placeholder="••••••••" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none focus:border-[#2A7A64]" />
+                    </div>
+                    
+                    <div class="flex justify-end mb-6">
+                        <a onclick="switchView('forgot')" class="text-xs text-[#2A7A64] font-semibold cursor-pointer hover:underline">Esqueceu a senha?</a>
                     </div>
 
-                    <button type="submit" class="bg-[#2A7A64] hover:bg-[#1A5444] text-white p-3.5 rounded-xl font-semibold transition-all">Entrar no Sistema</button>
-                    <div class="mt-6 text-sm text-center text-[#63736E]">Primeiro acesso? <a onclick="toggleMode()" class="text-[#2A7A64] font-semibold cursor-pointer hover:underline">Cadastre-se</a></div>
+                    <button type="submit" class="bg-[#2A7A64] hover:bg-[#1A5444] text-white p-3.5 rounded-xl font-semibold transition-all shadow-sm">Entrar no Sistema</button>
+                    <div class="mt-6 text-sm text-center text-[#63736E]">Primeiro acesso? <a onclick="switchView('register')" class="text-[#2A7A64] font-semibold cursor-pointer hover:underline">Cadastre-se</a></div>
                 </form>
 
-                <!-- Formulário de Registro (Oculto por padrão) -->
+                <!-- 2. FORMULÁRIO DE CADASTRO -->
                 <form id="regForm" onsubmit="doRegister(event)" class="flex flex-col hidden">
                     <h2 class="text-3xl font-fraunces mb-2 text-[#1F2E2B]">Criar Cadastro</h2>
+                    <div class="text-[#63736E] text-sm mb-6">Identifique-se na rede.</div>
                     
-                    <div class="mb-4 mt-4">
-                        <label class="block text-xs font-semibold text-[#63736E] mb-2">Nome Completo</label>
-                        <input id="regName" type="text" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-[#63736E] mb-1">Nome Completo</label>
+                        <input id="regName" type="text" required class="w-full p-2.5 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
                     </div>
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                            <label class="block text-xs font-semibold text-[#63736E] mb-2">E-mail</label>
-                            <input id="regEmail" type="email" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
+                            <label class="block text-xs font-semibold text-[#63736E] mb-1">E-mail</label>
+                            <input id="regEmail" type="email" required class="w-full p-2.5 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-[#63736E] mb-2">Senha</label>
-                            <input id="regPass" type="password" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
+                            <label class="block text-xs font-semibold text-[#63736E] mb-1">Senha</label>
+                            <input id="regPass" type="password" required class="w-full p-2.5 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
                         </div>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-xs font-semibold text-[#63736E] mb-2">Departamento</label>
-                        <select id="regRole" class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none">
+                        <label class="block text-xs font-semibold text-[#63736E] mb-1">Departamento</label>
+                        <select id="regRole" class="w-full p-2.5 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none">
                             <option value="Pedagogia">Pedagogia</option>
                             <option value="Psicologia">Psicologia</option>
                             <option value="Serviço Social">Serviço Social</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="bg-[#2A7A64] hover:bg-[#1A5444] text-white p-3.5 rounded-xl font-semibold transition-all">Criar Conta</button>
-                    <div class="mt-6 text-sm text-center text-[#63736E]">Já cadastrado? <a onclick="toggleMode()" class="text-[#2A7A64] font-semibold cursor-pointer hover:underline">Fazer Login</a></div>
+                    <button type="submit" class="bg-[#2A7A64] hover:bg-[#1A5444] text-white p-3.5 rounded-xl font-semibold transition-all shadow-sm">Criar Conta</button>
+                    <div class="mt-6 text-sm text-center text-[#63736E]">Já tem uma conta? <a onclick="switchView('login')" class="text-[#2A7A64] font-semibold cursor-pointer hover:underline">Fazer Login</a></div>
                 </form>
+
+                <!-- 3. FORMULÁRIO DE RECUPERAÇÃO DE SENHA -->
+                <form id="forgotForm" onsubmit="doRecover(event)" class="flex flex-col hidden">
+                    <h2 class="text-3xl font-fraunces mb-2 text-[#1F2E2B]">Recuperar Senha</h2>
+                    <div class="text-[#63736E] text-sm mb-6">Digite seu e-mail para receber o link de redefinição.</div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-xs font-semibold text-[#63736E] mb-2">E-mail Cadastrado</label>
+                        <input id="forgotEmail" type="email" placeholder="exemplo@escola.edu.br" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none focus:border-[#2A7A64]" />
+                    </div>
+
+                    <button type="submit" class="bg-[#2A7A64] hover:bg-[#1A5444] text-white p-3.5 rounded-xl font-semibold transition-all shadow-sm">Enviar E-mail de Recuperação</button>
+                    <div class="mt-6 text-sm text-center text-[#63736E]">Lembrou a senha? <a onclick="switchView('login')" class="text-[#2A7A64] font-semibold cursor-pointer hover:underline">Voltar ao Login</a></div>
+                </form>
+
             </div>
         </div>
     </div>
 
-    <!-- TELA PRINCIPAL DO SISTEMA (Oculta por padrão) -->
+    <!-- TELA DO SISTEMA LOGADO -->
     <div id="appScreen" class="h-screen grid-cols-[260px_1fr] hidden">
         <div class="bg-[#1A5444] text-white p-8 flex flex-col justify-between">
             <div>
@@ -129,7 +139,6 @@
         </main>
     </div>
 
-    <!-- Vincula a lógica -->
     <script src="app.js"></script>
 </body>
 </html>
