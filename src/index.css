@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ajuste fino global para manter consistência dos títulos */
+h1, h2, h3 {
+  font-family: 'Fraunces', serif;
+  letter-spacing: -0.01em;
+}
