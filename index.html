@@ -3,140 +3,117 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rede de Cuidado</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Rede de Cuidado - Registros</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: { extend: { fontFamily: { fraunces: ['Fraunces', 'serif'], public: ['Public Sans', 'sans-serif'] } } }
-        }
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .font-fraunces { font-family: 'Fraunces', serif; }
+        .table-row:hover { background-color: #1F2A24; }
+    </style>
 </head>
-<body class="bg-[#F4F7F6] text-[#1F2E2B] font-public m-0 h-screen overflow-hidden">
+<body class="bg-[#0F1211] text-gray-200 h-screen overflow-hidden">
 
-    <!-- TELA DE AUTENTICAÇÃO -->
-    <div id="authScreen" class="min-h-screen flex items-center justify-center p-6 bg-[#F4F7F6]">
-        <div class="w-full max-w-[960px] bg-white rounded-[24px] grid grid-cols-1 md:grid-cols-2 overflow-hidden shadow-lg border border-[#E2E8E5]">
-            
-            <div class="bg-gradient-to-br from-[#1A5444] to-[#2A7A64] text-white p-12 flex flex-col justify-between relative overflow-hidden hidden md:flex">
-                <div class="absolute -right-20 -bottom-20 w-80 h-80 rounded-full border border-white/10"></div>
-                <div class="relative z-10">
-                    <div class="text-sm tracking-widest uppercase font-semibold flex items-center gap-2">
-                        <i class='bx bx-hive'></i> Rede de Cuidado
+    <!-- AUTH SCREEN -->
+    <div id="authScreen" class="min-h-screen flex items-center justify-center p-6 bg-[#0F1211]">
+        <!-- Seu formulário de login atual (mantive quase igual) -->
+        <div class="w-full max-w-[960px] bg-[#1A1F1D] rounded-3xl grid grid-cols-1 md:grid-cols-2 overflow-hidden border border-[#2A3A35]">
+            <!-- Lado esquerdo -->
+            <div class="bg-gradient-to-br from-[#1A5444] to-[#2A7A64] p-12 hidden md:flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-2 text-white/90">
+                        <i class='bx bx-hive text-2xl'></i>
+                        <span class="font-semibold tracking-widest">REDE DE CUIDADO</span>
                     </div>
-                    <h1 class="text-4xl font-semibold leading-tight my-6 font-fraunces">Um só histórico,<br />toda a equipe.</h1>
-                    <p class="text-sm text-white/90 leading-relaxed max-w-[90%]">Prontuário eletrônico escolar integrado.</p>
+                    <h1 class="text-4xl font-fraunces leading-tight mt-8">Gestão de Registros</h1>
                 </div>
             </div>
 
-            <div class="p-12 flex flex-col justify-center relative">
-                <div id="sysMsg" style="display: none;" class="p-4 rounded-xl text-sm font-medium mb-4 flex items-center gap-2"></div>
-
-                <!-- 1. FORMULÁRIO DE LOGIN -->
-                <form id="loginForm" onsubmit="doLogin(event)" class="flex flex-col">
-                    <h2 class="text-3xl font-fraunces mb-2 text-[#1F2E2B]">Acesso ao Painel</h2>
-                    <div class="text-[#63736E] text-sm mb-6">Entre com suas credenciais.</div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-xs font-semibold text-[#63736E] mb-2">E-mail Institucional</label>
-                        <input id="loginEmail" type="email" placeholder="exemplo@escola.edu.br" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none focus:border-[#2A7A64]" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="block text-xs font-semibold text-[#63736E] mb-2">Senha</label>
-                        <input id="loginPass" type="password" placeholder="••••••••" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none focus:border-[#2A7A64]" />
-                    </div>
-                    
-                    <div class="flex justify-end mb-6">
-                        <a onclick="switchView('forgot')" class="text-xs text-[#2A7A64] font-semibold cursor-pointer hover:underline">Esqueceu a senha?</a>
-                    </div>
-
-                    <button type="submit" class="bg-[#2A7A64] hover:bg-[#1A5444] text-white p-3.5 rounded-xl font-semibold transition-all shadow-sm">Entrar no Sistema</button>
-                    <div class="mt-6 text-sm text-center text-[#63736E]">Primeiro acesso? <a onclick="switchView('register')" class="text-[#2A7A64] font-semibold cursor-pointer hover:underline">Cadastre-se</a></div>
+            <!-- Lado direito - Forms -->
+            <div class="p-10">
+                <div id="sysMsg" class="hidden p-4 rounded-2xl mb-6 text-sm"></div>
+                
+                <!-- Login -->
+                <form id="loginForm" onsubmit="doLogin(event)" class="space-y-6">
+                    <h2 class="text-3xl font-fraunces">Entrar</h2>
+                    <input id="loginEmail" type="email" placeholder="E-mail" required class="w-full bg-[#252B28] border border-[#3A4A44] rounded-2xl px-5 py-3 outline-none focus:border-[#2A7A64]">
+                    <input id="loginPass" type="password" placeholder="Senha" required class="w-full bg-[#252B28] border border-[#3A4A44] rounded-2xl px-5 py-3 outline-none focus:border-[#2A7A64]">
+                    <button type="submit" class="w-full bg-[#2A7A64] hover:bg-[#1A5444] py-3.5 rounded-2xl font-semibold">Entrar</button>
                 </form>
 
-                <!-- 2. FORMULÁRIO DE CADASTRO -->
-                <form id="regForm" onsubmit="doRegister(event)" class="flex flex-col hidden">
-                    <h2 class="text-3xl font-fraunces mb-2 text-[#1F2E2B]">Criar Cadastro</h2>
-                    <div class="text-[#63736E] text-sm mb-6">Identifique-se na rede.</div>
-                    
-                    <div class="mb-3">
-                        <label class="block text-xs font-semibold text-[#63736E] mb-1">Nome Completo</label>
-                        <input id="regName" type="text" required class="w-full p-2.5 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-[#63736E] mb-1">E-mail</label>
-                            <input id="regEmail" type="email" required class="w-full p-2.5 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-[#63736E] mb-1">Senha</label>
-                            <input id="regPass" type="password" required class="w-full p-2.5 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none" />
-                        </div>
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-xs font-semibold text-[#63736E] mb-1">Departamento</label>
-                        <select id="regRole" class="w-full p-2.5 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none">
-                            <option value="Pedagogia">Pedagogia</option>
-                            <option value="Psicologia">Psicologia</option>
-                            <option value="Serviço Social">Serviço Social</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="bg-[#2A7A64] hover:bg-[#1A5444] text-white p-3.5 rounded-xl font-semibold transition-all shadow-sm">Criar Conta</button>
-                    <div class="mt-6 text-sm text-center text-[#63736E]">Já tem uma conta? <a onclick="switchView('login')" class="text-[#2A7A64] font-semibold cursor-pointer hover:underline">Fazer Login</a></div>
+                <!-- Register (adicionei aqui também) -->
+                <form id="regForm" onsubmit="doRegister(event)" class="space-y-6 hidden">
+                    <h2 class="text-3xl font-fraunces">Criar Conta</h2>
+                    <input id="regName" type="text" placeholder="Nome completo" required class="w-full bg-[#252B28] border border-[#3A4A44] rounded-2xl px-5 py-3">
+                    <input id="regEmail" type="email" placeholder="E-mail" required class="w-full bg-[#252B28] border border-[#3A4A44] rounded-2xl px-5 py-3">
+                    <input id="regPass" type="password" placeholder="Senha" required class="w-full bg-[#252B28] border border-[#3A4A44] rounded-2xl px-5 py-3">
+                    <button type="submit" class="w-full bg-[#2A7A64] hover:bg-[#1A5444] py-3.5 rounded-2xl font-semibold">Cadastrar</button>
                 </form>
-
-                <!-- 3. FORMULÁRIO DE RECUPERAÇÃO DE SENHA -->
-                <form id="forgotForm" onsubmit="doRecover(event)" class="flex flex-col hidden">
-                    <h2 class="text-3xl font-fraunces mb-2 text-[#1F2E2B]">Recuperar Senha</h2>
-                    <div class="text-[#63736E] text-sm mb-6">Digite seu e-mail para receber o link de redefinição.</div>
-                    
-                    <div class="mb-6">
-                        <label class="block text-xs font-semibold text-[#63736E] mb-2">E-mail Cadastrado</label>
-                        <input id="forgotEmail" type="email" placeholder="exemplo@escola.edu.br" required class="w-full p-3 border border-[#E2E8E5] rounded-xl bg-[#FAFCFB] outline-none focus:border-[#2A7A64]" />
-                    </div>
-
-                    <button type="submit" class="bg-[#2A7A64] hover:bg-[#1A5444] text-white p-3.5 rounded-xl font-semibold transition-all shadow-sm">Enviar E-mail de Recuperação</button>
-                    <div class="mt-6 text-sm text-center text-[#63736E]">Lembrou a senha? <a onclick="switchView('login')" class="text-[#2A7A64] font-semibold cursor-pointer hover:underline">Voltar ao Login</a></div>
-                </form>
-
             </div>
         </div>
     </div>
 
-    <!-- TELA DO SISTEMA LOGADO -->
-    <div id="appScreen" class="h-screen grid-cols-[260px_1fr] hidden">
-        <div class="bg-[#1A5444] text-white p-8 flex flex-col justify-between">
-            <div>
-                <div class="font-fraunces text-lg mb-8 flex items-center gap-3">
-                    <div class="w-8 h-8 bg-white text-[#1A5444] rounded-lg flex items-center justify-center font-bold">R</div>
-                    Rede de Cuidado
+    <!-- APP SCREEN (Table Editor) -->
+    <div id="appScreen" class="hidden h-screen grid grid-cols-[280px_1fr]">
+        <!-- Sidebar -->
+        <div class="bg-[#1A1F1D] border-r border-[#2A3A35] p-6 flex flex-col">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="w-9 h-9 bg-[#2A7A64] text-white rounded-xl flex items-center justify-center font-bold">R</div>
+                <div>
+                    <div class="font-fraunces text-xl">Rede de Cuidado</div>
+                    <div class="text-xs text-emerald-400">Produção</div>
                 </div>
-                <nav class="flex flex-col gap-2">
-                    <a class="bg-white/15 p-3.5 rounded-xl text-sm font-medium cursor-pointer block"><i class='bx bx-grid-alt'></i> Painel Inicial</a>
-                </nav>
             </div>
-            <div class="pt-6 border-t border-white/10">
-                <div class="text-[11px] text-white/60 mb-1">Logado como:</div>
-                <div id="userName" class="font-semibold text-sm truncate">...</div>
-                <div id="userRole" class="inline-block mt-2 text-[10px] px-2 py-1 rounded-full bg-white/15 uppercase font-bold">...</div>
-                <button onclick="doLogout()" class="mt-4 text-white/60 hover:text-white text-xs text-left cursor-pointer flex items-center gap-2"><i class='bx bx-log-out'></i> Sair do sistema</button>
+
+            <nav class="space-y-1">
+                <a onclick="loadTable()" class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#2A3A35] text-white">
+                    <i class='bx bx-table'></i>
+                    <span class="font-medium">registros</span>
+                </a>
+            </nav>
+
+            <div class="mt-auto pt-6 border-t border-[#2A3A35]">
+                <div class="text-xs text-gray-500 mb-1">Logado como</div>
+                <div id="userName" class="font-semibold"></div>
+                <button onclick="doLogout()" class="mt-4 text-red-400 hover:text-red-500 text-sm flex items-center gap-2">
+                    <i class='bx bx-log-out'></i> Sair
+                </button>
             </div>
         </div>
-        <main class="p-10 bg-[#F4F7F6] overflow-y-auto">
-            <h1 class="text-3xl font-fraunces text-[#1A5444] mb-8">Painel Inicial</h1>
-            <div class="bg-white border border-[#E2E8E5] rounded-2xl p-6 shadow-sm max-w-sm flex items-center gap-5">
-                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl bg-[#E8F2EF] text-[#1A5444]"><i class='bx bx-group'></i></div>
-                <div>
-                    <div class="text-xs text-[#63736E] font-medium mb-1">Alunos na Base</div>
-                    <div class="text-3xl font-bold font-fraunces text-[#1A5444]">342</div>
+
+        <!-- Main Content -->
+        <div class="flex flex-col">
+            <!-- Top Bar -->
+            <div class="h-14 border-b border-[#2A3A35] flex items-center px-6 justify-between bg-[#1A1F1D]">
+                <div class="flex items-center gap-4">
+                    <h1 class="font-semibold text-lg">public.registros</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <input id="searchInput" placeholder="Buscar por chave ou valor..." 
+                           class="bg-[#252B28] border border-[#3A4A44] rounded-xl px-4 py-2 w-80 text-sm focus:outline-none">
+                    <button onclick="insertNewRow()" 
+                            class="bg-[#2A7A64] hover:bg-[#1F5A4A] px-5 py-2 rounded-xl flex items-center gap-2 text-sm font-medium">
+                        <i class='bx bx-plus'></i> Novo Registro
+                    </button>
                 </div>
             </div>
-        </main>
+
+            <!-- Table Area -->
+            <div class="flex-1 overflow-auto p-6">
+                <table id="dataTable" class="w-full border-collapse text-sm">
+                    <thead class="bg-[#1F2522] sticky top-0">
+                        <tr>
+                            <th class="text-left p-4 border-b border-[#2A3A35]">chave</th>
+                            <th class="text-left p-4 border-b border-[#2A3A35]">valor (JSON)</th>
+                            <th class="w-32 text-center p-4 border-b border-[#2A3A35]">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-gray-300"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
