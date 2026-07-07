@@ -37,6 +37,7 @@
         h1, h2, h3, .display { font-family: 'Fraunces', serif; letter-spacing: -0.01em; }
         button, input, select, textarea { font-family: inherit; }
         button { cursor: pointer; transition: all 0.2s ease; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* ---------- AUTH ---------- */
         .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg); }
@@ -61,7 +62,7 @@
         .form-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--teal); letter-spacing: 0.5px; margin: 24px 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
 
         .btn-primary { background: var(--teal); color: #fff; border: none; padding: 14px 24px; border-radius: var(--radius); font-size: 15px; font-weight: 600; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary:hover { background: var(--teal-dark); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(26, 84, 68, 0.2); }
+        .btn-primary:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(26, 84, 68, 0.2); }
         
         .switch-line { margin-top: 25px; font-size: 14px; color: var(--ink-soft); text-align: center; }
         .switch-line a { color: var(--teal); font-weight: 600; cursor: pointer; text-decoration: none; }
@@ -134,9 +135,9 @@
         .tag.alert { background: #FFF4E5; color: #B26A00; border: 1px solid #FFD8A8; }
 
         .btn-sm { padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); background: #fff; display: inline-flex; align-items: center; gap: 8px; color: var(--ink); }
-        .btn-sm:hover { background: var(--bg); border-color: #ccc; }
+        .btn-sm:hover:not(:disabled) { background: var(--bg); border-color: #ccc; }
         .btn-sm.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
-        .btn-sm.primary:hover { background: var(--teal-dark); transform: translateY(-1px); }
+        .btn-sm.primary:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-1px); }
         
         .empty-state { text-align: center; padding: 60px 20px; }
         .empty-state i { font-size: 56px; color: #D1D9D6; margin-bottom: 16px; }
@@ -192,7 +193,7 @@
                     <label>Senha</label>
                     <input type="password" id="loginPass" placeholder="••••••••">
                 </div>
-                <button class="btn-primary" onclick="doLogin()">Entrar no Sistema <i class='bx bx-right-arrow-alt'></i></button>
+                <button class="btn-primary" id="btnLogar" onclick="doLogin()">Entrar no Sistema <i class='bx bx-right-arrow-alt'></i></button>
                 <div class="switch-line">Primeiro acesso? <a onclick="showRegister()">Cadastre sua função</a></div>
             </div>
 
@@ -217,7 +218,7 @@
                         <option value="admin">Administração / Direção</option>
                     </select>
                 </div>
-                <button class="btn-primary" onclick="doRegister()">Criar Conta Profissional <i class='bx bx-check'></i></button>
+                <button class="btn-primary" id="btnCadastrar" onclick="doRegister()">Criar Conta Profissional <i class='bx bx-check'></i></button>
                 <div class="switch-line">Já cadastrado? <a onclick="showLogin()">Fazer Login</a></div>
             </div>
         </div>
@@ -233,6 +234,7 @@
                 <a class="nav-link active" data-view="dashboard" onclick="setView('dashboard')"><i class='bx bx-grid-alt'></i> Painel Inicial</a>
                 <a class="nav-link" data-view="pessoas" onclick="setView('pessoas')"><i class='bx bx-user'></i> Cadastro de Alunos</a>
                 <a class="nav-link" data-view="notificacoes" onclick="setView('notificacoes')"><i class='bx bx-folder-open'></i> Todos os Prontuários</a>
+                <a class="nav-link" data-view="equipe" id="navEquipe" onclick="setView('equipe')" style="display:none;"><i class='bx bx-group'></i> Gestão da Equipe</a>
             </nav>
             <div class="who">
                 <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">Profissional Logado:</div>
@@ -370,6 +372,28 @@
                 </div>
             </div>
 
+            <div id="view-equipe" style="display:none;">
+                <div class="topline">
+                    <div>
+                        <h1>Gestão da Equipe</h1>
+                        <div class="sub">Controle de profissionais cadastrados com acesso à Rede de Cuidado.</div>
+                    </div>
+                </div>
+                <div class="panel" style="padding: 0; overflow: hidden;">
+                    <table id="tblEquipe">
+                        <thead style="background: #FAFCFB;">
+                            <tr>
+                                <th>Profissional</th>
+                                <th>E-mail de Acesso</th>
+                                <th>Setor de Atuação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div id="view-caso" style="display:none;">
                 <div class="topline" style="margin-bottom: 24px;">
                     <div>
@@ -397,7 +421,7 @@
                             </div>
                             <textarea id="notaTexto" placeholder="Descreva os achados, observações ou combinados..." style="min-height: 100px; border: 1.5px solid var(--line); background: #fff;"></textarea>
                             <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
-                                <button class="btn-primary" style="width: auto;" onclick="addNota()"><i class='bx bx-send'></i> Gravar no Histórico</button>
+                                <button class="btn-primary" id="btnSalvarNota" style="width: auto;" onclick="addNota()"><i class='bx bx-send'></i> Gravar no Histórico</button>
                             </div>
                         </div>
 
@@ -478,7 +502,7 @@
                 <label>Telefone de Contato</label>
                 <input type="tel" id="pTel" placeholder="Ex: (00) 90000-0000">
             </div>
-            <button class="btn-primary" style="margin-top: 10px;" onclick="savePessoa()"><i class='bx bx-save'></i> Salvar Cadastro no Sistema</button>
+            <button class="btn-primary" id="btnSalvarPessoa" style="margin-top: 10px;" onclick="savePessoa()"><i class='bx bx-save'></i> Salvar Cadastro no Sistema</button>
         </div>
     </div>
 
@@ -534,22 +558,26 @@
                 <label>Descrição do Contexto</label>
                 <textarea id="cDesc" placeholder="Seja objetivo. Descreva o que motivou a abertura deste prontuário..."></textarea>
             </div>
-            <button class="btn-primary" onclick="saveCaso()"><i class='bx bx-check-shield'></i> Confirmar Abertura</button>
+            <button class="btn-primary" id="btnSalvarCaso" onclick="saveCaso()"><i class='bx bx-check-shield'></i> Confirmar Abertura</button>
         </div>
     </div>
 
     <script>
-        // === CONFIGURAÇÃO DO SUPABASE ===
+        // === CONFIGURAÇÃO DO SUPABASE: PREENCHA AQUI ANTES DE SUBIR PRO GITHUB! ===
         const supabaseUrl = 'https://peqmqjlaypgwtscwpkot.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcW1xamxheXBnd3RzY3dwa290Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjcwODksImV4cCI6MjA5OTAwMzA4OX0.fllv67MNZHyOW6yH9HCZOS5Kbk-2N-GpY5bEMCbXkik';
+        
         // Inicializa o cliente Supabase
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        /* --- NOVOS HELPERS DE STORAGE APONTANDO PARA A NUVEM --- */
+        /* --- HELPERS DE STORAGE APONTANDO PARA A NUVEM (COM TRATAMENTO DE ERRO MELHORADO) --- */
         async function sset(key, val) { 
             const { error } = await _supabase.from('registros').upsert({ chave: key, valor: val });
-            if (error) console.error("Erro sset:", error);
-            return !error;
+            if (error) {
+                console.error("Erro sset:", error);
+                throw error; // Lança o erro para que a interface possa mostrar o alerta vermelho
+            }
+            return true;
         }
 
         async function sget(key) { 
@@ -558,7 +586,8 @@
         }
 
         async function slist(prefix) { 
-            const { data, error } = await _supabase.from('registros').select('chave').like('chave', prefix + '%');
+            // O ilike é mais seguro que o like para buscar textos
+            const { data, error } = await _supabase.from('registros').select('chave').ilike('chave', prefix + '%');
             return data ? data.map(d => d.chave) : []; 
         }
 
@@ -572,6 +601,15 @@
         let currentUser = null;
         let currentCasoId = null;
 
+        // Ao abrir a página, verifica se o usuário já havia feito login antes (Sessão Contínua)
+        window.onload = async () => {
+            const savedSession = localStorage.getItem('redeCuidado_session');
+            if(savedSession) {
+                currentUser = JSON.parse(savedSession);
+                prepararPainel();
+            }
+        };
+
         // Atualização automática a cada 5 segundos para simular tempo real para a equipe
         setInterval(() => { if(currentUser) refreshAll(); }, 5000);
 
@@ -583,7 +621,7 @@
             el.innerHTML = type === 'err' ? `<i class='bx bx-error'></i> ${text}` : `<i class='bx bx-check-circle'></i> ${text}`;
             el.style.display = 'flex';
             el.className = 'msg-box ' + type; 
-            setTimeout(() => el.style.display = 'none', 4000); 
+            setTimeout(() => el.style.display = 'none', 6000); // 6 segundos para ler o erro longo
         }
 
         async function doRegister() {
@@ -591,48 +629,90 @@
             const email = document.getElementById('regEmail').value.trim().toLowerCase();
             const pass = document.getElementById('regPass').value;
             const papel = document.getElementById('regPapel').value;
-            if (!nome || !email || pass.length < 4) { showMsg('regMsg', 'Preencha todos os campos.', 'err'); return; }
             
-            // Exibe mensagem de carregando pois agora consulta na internet
-            document.getElementById('regMsg').innerHTML = "Carregando...";
-            document.getElementById('regMsg').style.display = "block";
+            if (!nome || !email || pass.length < 4) { 
+                showMsg('regMsg', 'Preencha todos os campos. A senha deve ter 4 dígitos.', 'err'); 
+                return; 
+            }
+            
+            const btn = document.getElementById('btnCadastrar');
+            btn.disabled = true;
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Criando conta...";
 
-            if (await sget('user:' + email)) { showMsg('regMsg', 'E-mail já cadastrado.', 'err'); return; }
-            await sset('user:' + email, { nome, email, pass, papel });
-            showMsg('regMsg', 'Conta criada com sucesso!', 'ok');
-            setTimeout(() => { showLogin(); document.getElementById('loginEmail').value = email; }, 1500);
+            try {
+                if (await sget('user:' + email)) { 
+                    showMsg('regMsg', 'E-mail já cadastrado no sistema.', 'err'); 
+                    btn.disabled = false; btn.innerHTML = "Criar Conta Profissional <i class='bx bx-check'></i>";
+                    return; 
+                }
+                
+                await sset('user:' + email, { nome, email, pass, papel });
+                showMsg('regMsg', 'Conta criada com sucesso! Redirecionando...', 'ok');
+                setTimeout(() => { showLogin(); document.getElementById('loginEmail').value = email; }, 1500);
+            } catch (error) {
+                // Se o erro for de Primary Key, ele avisa o Administrador
+                if(error.message.includes("primary key") || error.message.includes("duplicate")) {
+                    showMsg('regMsg', 'Erro Supabase: Você esqueceu de definir a coluna "chave" como Primary Key na tabela registros.', 'err');
+                } else {
+                    showMsg('regMsg', 'Falha na conexão com o Banco de Dados. Verifique a Tabela.', 'err');
+                }
+            }
+            btn.disabled = false; btn.innerHTML = "Criar Conta Profissional <i class='bx bx-check'></i>";
         }
 
         async function doLogin() {
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const pass = document.getElementById('loginPass').value;
             
-            document.getElementById('loginMsg').innerHTML = "Autenticando na nuvem...";
-            document.getElementById('loginMsg').style.display = "block";
+            const btn = document.getElementById('btnLogar');
+            btn.disabled = true; btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Autenticando...";
 
-            const user = await sget('user:' + email);
-            if (!user || user.pass !== pass) { showMsg('loginMsg', 'E-mail ou senha incorretos.', 'err'); return; }
-            
-            currentUser = user;
+            try {
+                const user = await sget('user:' + email);
+                if (!user || user.pass !== pass) { 
+                    showMsg('loginMsg', 'E-mail ou senha incorretos.', 'err'); 
+                    btn.disabled = false; btn.innerHTML = "Entrar no Sistema <i class='bx bx-right-arrow-alt'></i>";
+                    return; 
+                }
+                
+                currentUser = user;
+                // Salva a sessão no navegador para não deslogar ao atualizar a página (Auto-login)
+                localStorage.setItem('redeCuidado_session', JSON.stringify(currentUser));
+                prepararPainel();
+                
+            } catch (error) {
+                showMsg('loginMsg', 'Erro de conexão: Verifique se a Tabela "registros" está criada corretamente.', 'err');
+            }
+            btn.disabled = false; btn.innerHTML = "Entrar no Sistema <i class='bx bx-right-arrow-alt'></i>";
+        }
+
+        function prepararPainel() {
             document.getElementById('authWrap').style.display = 'none';
             document.getElementById('app').classList.add('show');
-            document.getElementById('sideName').textContent = user.nome;
-            document.getElementById('sideRole').textContent = ROLE_LABEL[user.papel];
+            document.getElementById('sideName').textContent = currentUser.nome;
+            document.getElementById('sideRole').textContent = ROLE_LABEL[currentUser.papel];
+            
+            // Mostra a aba "Equipe" apenas se for Administrador
+            if(currentUser.papel === 'admin') {
+                document.getElementById('navEquipe').style.display = 'flex';
+            }
             
             const hr = new Date().getHours();
-            document.getElementById('greeting').textContent = (hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + user.nome.split(' ')[0] + '!';
+            document.getElementById('greeting').textContent = (hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + currentUser.nome.split(' ')[0] + '!';
             setView('dashboard');
         }
 
         function doLogout() {
             currentUser = null;
+            localStorage.removeItem('redeCuidado_session'); // Limpa o Auto-login
             document.getElementById('app').classList.remove('show');
             document.getElementById('authWrap').style.display = 'flex';
             document.getElementById('loginPass').value = '';
+            document.getElementById('navEquipe').style.display = 'none';
         }
 
         function setView(v) {
-            ['dashboard', 'pessoas', 'notificacoes', 'caso'].forEach(x => { document.getElementById('view-' + x).style.display = (x === v) ? 'block' : 'none'; });
+            ['dashboard', 'pessoas', 'notificacoes', 'caso', 'equipe'].forEach(x => { document.getElementById('view-' + x).style.display = (x === v) ? 'block' : 'none'; });
             document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
             const link = document.querySelector('.nav-link[data-view="' + v + '"]');
             if (link) link.classList.add('active');
@@ -664,6 +744,10 @@
         async function savePessoa() {
             const nome = document.getElementById('pNome').value.trim();
             if (!nome) { document.getElementById('pErro').style.display = 'flex'; return; }
+            
+            const btn = document.getElementById('btnSalvarPessoa');
+            btn.disabled = true; btn.innerHTML = "Salvando...";
+
             const id = 'p_' + Date.now();
             await sset('pessoa:' + id, {
                 id, nome, 
@@ -673,6 +757,8 @@
                 telefone: document.getElementById('pTel').value,
                 criadoPor: currentUser.nome, criadoPapel: currentUser.papel, criadoEm: Date.now()
             });
+            
+            btn.disabled = false; btn.innerHTML = "<i class='bx bx-save'></i> Salvar Cadastro no Sistema";
             closeModal('modalPessoa'); refreshAll();
         }
 
@@ -693,6 +779,10 @@
         async function saveCaso() {
             const pessoaId = document.getElementById('cPessoa').value;
             if (!pessoaId) { document.getElementById('cErro').style.display = 'flex'; return; }
+            
+            const btn = document.getElementById('btnSalvarCaso');
+            btn.disabled = true; btn.innerHTML = "Gravando Prontuário...";
+
             const pessoa = await sget('pessoa:' + pessoaId);
             const id = 'c_' + Date.now();
             
@@ -714,6 +804,7 @@
             const notaId = 'n_' + Date.now();
             await sset('nota:' + id + ':' + notaId, { id: notaId, tipo: 'Abertura', texto: txtNota, autor: currentUser.nome, papel: currentUser.papel, criadoEm: Date.now() });
             
+            btn.disabled = false; btn.innerHTML = "<i class='bx bx-check-shield'></i> Confirmar Abertura";
             closeModal('modalCaso'); refreshAll();
         }
 
@@ -816,10 +907,17 @@
             const texto = document.getElementById('notaTexto').value.trim();
             const tipo = document.getElementById('notaTipo').value;
             if (!texto || !currentCasoId) return;
+            
+            const btn = document.getElementById('btnSalvarNota');
+            btn.disabled = true; btn.innerHTML = "Publicando...";
+
             const notaId = 'n_' + Date.now();
             await sset('nota:' + currentCasoId + ':' + notaId, { id: notaId, tipo, texto, autor: currentUser.nome, papel: currentUser.papel, criadoEm: Date.now() });
+            
             document.getElementById('notaTexto').value = '';
             await renderThread(currentCasoId);
+            
+            btn.disabled = false; btn.innerHTML = "<i class='bx bx-send'></i> Gravar no Histórico";
         }
 
         function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -828,6 +926,19 @@
         async function refreshAll() {
             if (!currentUser) return;
             
+            // Busca Equipe (apenas se for admin para preencher a tabela)
+            if(currentUser.papel === 'admin' && document.getElementById('view-equipe').style.display !== 'none') {
+                const equipe = [];
+                for (const k of await slist('user:')) { const u = await sget(k); if (u) equipe.push(u); }
+                const tbE = document.querySelector('#tblEquipe tbody');
+                tbE.innerHTML = equipe.map(u => `<tr>
+                    <td><strong>${u.nome}</strong></td>
+                    <td>${u.email}</td>
+                    <td><span class="tag ${ROLE_CLASS[u.papel]}">${ROLE_LABEL[u.papel]}</span></td>
+                    <td><button class="btn-sm" style="color: var(--danger);" onclick="sdel('user:${u.email}'); refreshAll();"><i class='bx bx-user-x'></i> Remover</button></td>
+                </tr>`).join('');
+            }
+
             const pessoas = [];
             for (const k of await slist('pessoa:')) { const p = await sget(k); if (p) pessoas.push(p); }
             pessoas.sort((a, b) => b.criadoEm - a.criadoEm);
@@ -867,7 +978,7 @@
                     <td>${infoSec}</td>
                     <td>${contato}</td>
                     <td><span class="tag ${ROLE_CLASS[p.criadoPapel]}">${p.criadoPor}</span></td>
-                    <td><button class="btn-sm" style="color: var(--danger);" onclick="sdel('pessoa:${p.id}'); refreshAll();" title="Excluir Aluno"><i class='bx bx-trash'></i></button></td>
+                    <td><button class="btn-sm" style="color: var(--danger);" onclick="if(confirm('Apagar cadastro do aluno?')) { sdel('pessoa:${p.id}'); refreshAll(); }" title="Excluir Aluno"><i class='bx bx-trash'></i></button></td>
                 </tr>`;
             }).join('');
             document.getElementById('pessoasEmpty').style.display = pessoas.length ? 'none' : 'block';
