@@ -4,28 +4,36 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ====================== SWITCH VIEWS ======================
-function switchView(view) {
-    document.querySelectorAll('#loginForm, #regForm').forEach(f => f.classList.add('hidden'));
-    if (view === 'login') document.getElementById('loginForm').classList.remove('hidden');
-    if (view === 'register') document.getElementById('regForm').classList.remove('hidden');
+// ====================== TROCA DE TELAS ======================
+function switchView(viewName) {
+    const loginForm = document.getElementById('loginForm');
+    const regForm = document.getElementById('regForm');
+
+    loginForm.classList.add('hidden');
+    regForm.classList.add('hidden');
+
+    if (viewName === 'login') loginForm.classList.remove('hidden');
+    if (viewName === 'register') regForm.classList.remove('hidden');
 }
 
 // ====================== MENSAGENS ======================
 function showMsg(text, type = 'ok') {
     const msg = document.getElementById('sysMsg');
+    if (!msg) return;
     msg.textContent = text;
-    msg.className = `p-4 rounded-2xl text-sm ${type === 'err' ? 'bg-red-900/50 text-red-300' : 'bg-emerald-900/50 text-emerald-300'}`;
+    msg.className = `mb-6 p-4 rounded-2xl text-sm ${type === 'err' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`;
     msg.classList.remove('hidden');
-    setTimeout(() => msg.classList.add('hidden'), 5000);
+    setTimeout(() => msg.classList.add('hidden'), 6000);
 }
 
 // ====================== AUTH ======================
 supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN') showApp(session.user);
-    if (event === 'SIGNED_OUT') {
+    if (event === 'SIGNED_IN') {
+        showApp(session.user);
+    } else if (event === 'SIGNED_OUT') {
         document.getElementById('appScreen').classList.add('hidden');
         document.getElementById('authScreen').classList.remove('hidden');
+        switchView('login');
     }
 });
 
@@ -33,15 +41,39 @@ async function doLogin(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPass').value;
-    
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) showMsg(error.message, 'err');
 }
 
 async function doRegister(e) {
     e.preventDefault();
-    // ... (seu código de registro atual)
-    // (pode manter o que você já tinha)
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPass').value;
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+        email, 
+        password,
+        options: { data: { full_name: name } }
+    });
+
+    if (authError) {
+        showMsg(authError.message, 'err');
+        return;
+    }
+
+    // Salvar na tabela registros
+    await supabase.from('registros').insert([{
+        chave: email,
+        valor: {
+            nome_completo: name,
+            data_criacao: new Date().toISOString()
+        }
+    }]);
+
+    showMsg('Conta criada! Faça login.', 'ok');
+    switchView('login');
 }
 
 async function doLogout() {
@@ -57,35 +89,28 @@ function showApp(user) {
 
 // ====================== TABLE EDITOR ======================
 async function loadTable() {
-    const { data, error } = await supabase
-        .from('registros')
-        .select('*')
-        .order('chave');
-
+    const { data, error } = await supabase.from('registros').select('*').order('chave');
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
 
-    if (error) {
-        showMsg('Erro ao carregar tabela', 'err');
-        return;
-    }
+    if (error) return showMsg('Erro ao carregar dados', 'err');
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-12 text-gray-500">Tabela vazia</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-12 text-gray-500">Nenhum registro encontrado</td></tr>`;
         return;
     }
 
     data.forEach(row => {
         const tr = document.createElement('tr');
-        tr.className = 'table-row border-b border-[#2A3A35] hover:bg-[#1F2522]';
+        tr.className = 'table-row border-b border-[#2A3A35]';
         tr.innerHTML = `
             <td class="p-4 font-mono text-emerald-400">${row.chave}</td>
             <td class="p-4">
-                <pre class="text-xs bg-[#252B28] p-3 rounded-xl overflow-auto max-h-32">${JSON.stringify(row.valor, null, 2)}</pre>
+                <pre class="text-xs bg-[#252B28] p-3 rounded-xl overflow-auto">${JSON.stringify(row.valor, null, 2)}</pre>
             </td>
             <td class="p-4 text-center">
                 <button onclick="deleteRow('${row.chave}')" class="text-red-400 hover:text-red-500">
-                    <i class='bx bx-trash'></i>
+                    <i class='bx bx-trash text-xl'></i>
                 </button>
             </td>
         `;
@@ -94,37 +119,25 @@ async function loadTable() {
 }
 
 async function insertNewRow() {
-    const chave = prompt("Digite a chave (geralmente o e-mail):");
+    const chave = prompt("Digite a chave (ex: email do aluno):");
     if (!chave) return;
 
-    const valorStr = prompt("Digite o JSON do valor (ex: {\"nome\": \"João\"}):", '{}');
+    const jsonStr = prompt("Digite o JSON do valor:", '{"nome": "", "turma": ""}');
     let valor;
-    try {
-        valor = JSON.parse(valorStr);
-    } catch {
-        showMsg("JSON inválido", 'err');
-        return;
-    }
+    try { valor = JSON.parse(jsonStr); } 
+    catch { return showMsg("JSON inválido!", 'err'); }
 
-    const { error } = await supabase
-        .from('registros')
-        .insert([{ chave, valor }]);
-
+    const { error } = await supabase.from('registros').insert([{ chave, valor }]);
     if (error) showMsg(error.message, 'err');
     else {
-        showMsg('Registro inserido com sucesso!');
+        showMsg('Registro adicionado!');
         loadTable();
     }
 }
 
 async function deleteRow(chave) {
-    if (!confirm(`Excluir registro "${chave}"?`)) return;
-    
-    const { error } = await supabase
-        .from('registros')
-        .delete()
-        .eq('chave', chave);
-
+    if (!confirm(`Excluir o registro "${chave}"?`)) return;
+    const { error } = await supabase.from('registros').delete().eq('chave', chave);
     if (error) showMsg(error.message, 'err');
     else loadTable();
 }
