@@ -14,7 +14,7 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-    background:var(--bg);font-family:'IBM Plex Sans',sans-serif;color:var(--ink);}
+    background:var(--bg);font-family:'IBM Plex Sans',sans-serif;color:var(--ink);padding:16px;}
   .card{background:var(--paper);border-radius:12px;padding:34px 32px;width:100%;max-width:380px;
     border:1px solid var(--line);}
   h1{font-family:'Fraunces',serif;font-size:22px;margin:0 0 8px;}
@@ -28,6 +28,11 @@
   .msg-erro{background:var(--danger-pale);color:var(--danger);font-size:13px;padding:10px 12px;border-radius:7px;margin-bottom:6px;display:none;}
   .msg-ok{background:var(--teal-pale);color:var(--teal);font-size:13px;padding:10px 12px;border-radius:7px;margin-bottom:6px;display:none;}
   a{color:var(--teal);font-size:13px;font-weight:600;}
+
+  @media(max-width:480px){
+    .card{padding:26px 22px;}
+    h1{font-size:20px;}
+  }
 </style>
 </head>
 <body>
@@ -50,7 +55,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-  // Use exatamente os mesmos valores configurados em elo-escolar.html
+  // Use exatamente os mesmos valores configurados em index.html
   const SUPABASE_URL = "https://peqmqjlaypgwtscwpkot.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcW1xamxheXBnd3RzY3dwa290Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjcwODksImV4cCI6MjA5OTAwMzA4OX0.fllv67MNZHyOW6yH9HCZOS5Kbk-2N-GpY5bEMCbXkik";
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
