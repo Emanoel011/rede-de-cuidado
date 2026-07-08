@@ -95,10 +95,11 @@
 
   .main{padding:26px 34px;overflow-y:auto;}
   .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+  .topbar-left{display:flex;align-items:center;gap:12px;}
   .topbar h1{font-size:22px;margin:0;font-weight:600;}
   .topbar .sub{color:var(--ink-soft);font-size:13.5px;margin-top:3px;}
   .who{display:flex;align-items:center;gap:10px;}
-  .who .avatar{width:34px;height:34px;border-radius:50%;background:var(--amber-pale);color:var(--amber);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .who .avatar{width:34px;height:34px;border-radius:50%;background:var(--amber-pale);color:var(--amber);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none;}
   .who .meta{font-size:12.5px;line-height:1.3;}
   .who .meta b{display:block;font-size:13.5px;}
   .logout-btn{background:none;border:1px solid var(--line);border-radius:7px;padding:6px 11px;font-size:12.5px;color:var(--ink-soft);}
@@ -155,12 +156,12 @@
 
   .back-link{font-size:13px;color:var(--teal);font-weight:600;margin-bottom:10px;display:inline-block;background:none;border:none;padding:0;}
 
-  .student-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+  .student-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
   .student-head .name{font-size:22px;font-weight:600;}
-  .student-head .tags{margin-top:6px;display:flex;gap:8px;}
+  .student-head .tags{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;}
 
-  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap;}
-  .tab-btn{background:none;border:none;padding:10px 15px;font-size:13.5px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap;overflow-x:auto;}
+  .tab-btn{background:none;border:none;padding:10px 15px;font-size:13.5px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;white-space:nowrap;}
   .tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
   .tab-btn:disabled{opacity:.4;cursor:not-allowed;}
   .tab-content{display:none;}
@@ -174,18 +175,18 @@
   .timeline{list-style:none;padding:0;margin:0;}
   .timeline li{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #EFEDE4;}
   .timeline .tico{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
-  .timeline .body{flex:1;}
-  .timeline .row1{display:flex;justify-content:space-between;font-size:13px;}
+  .timeline .body{flex:1;min-width:0;}
+  .timeline .row1{display:flex;justify-content:space-between;font-size:13px;gap:8px;flex-wrap:wrap;}
   .timeline .author{font-weight:600;}
   .timeline .date{color:var(--ink-soft);font-size:12px;}
   .timeline .txt{margin-top:4px;font-size:13.5px;color:var(--ink);}
   .timeline .txt.sigiloso{color:var(--ink-soft);font-style:italic;}
 
   .modal-overlay{
-    display:none;position:fixed;inset:0;background:rgba(23,36,32,.45);align-items:center;justify-content:center;z-index:50;
+    display:none;position:fixed;inset:0;background:rgba(23,36,32,.45);align-items:center;justify-content:center;z-index:50;padding:16px;
   }
   .modal-overlay.active{display:flex;}
-  .modal{background:var(--paper);border-radius:12px;padding:26px 28px;width:440px;max-width:92vw;}
+  .modal{background:var(--paper);border-radius:12px;padding:26px 28px;width:440px;max-width:100%;max-height:90vh;overflow-y:auto;}
   .modal h3{margin:0 0 18px;}
   .modal .primary-btn{margin-top:18px;}
   .cancel-link{background:none;border:none;color:var(--ink-soft);font-size:13px;margin-top:10px;width:100%;text-align:center;}
@@ -196,6 +197,60 @@
 
   ::-webkit-scrollbar{width:9px;}
   ::-webkit-scrollbar-thumb{background:#C9C4B4;border-radius:6px;}
+
+  /* ---------- RESPONSIVE / MOBILE ---------- */
+  .menu-toggle{
+    display:none;background:var(--paper);border:1px solid var(--line);border-radius:7px;
+    width:38px;height:38px;font-size:17px;color:var(--ink);flex:none;align-items:center;justify-content:center;
+  }
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(23,36,32,.45);z-index:39;}
+  .sidebar-overlay.active{display:block;}
+
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+  @media(max-width:1080px){
+    .cards-row{grid-template-columns:repeat(2,1fr);}
+  }
+
+  @media(max-width:900px){
+    #app-screen{grid-template-columns:1fr;}
+    .sidebar{
+      position:fixed;top:0;left:0;bottom:0;width:230px;z-index:40;
+      transform:translateX(-100%);transition:transform .25s ease;box-shadow:2px 0 18px rgba(0,0,0,.25);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .main{padding:18px 16px 40px;}
+    .menu-toggle{display:flex;}
+    .topbar{flex-wrap:wrap;gap:12px;}
+    .who .meta{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+    .login-art{flex:none;padding:32px 26px;min-height:220px;}
+    .login-art h1{font-size:30px;}
+    .login-art p{font-size:14px;}
+    .roles-legend{margin-top:20px;}
+    .thread-svg{display:none;}
+    #login-screen{flex-direction:column;min-height:auto;}
+    .login-form-wrap{padding:28px 20px;}
+  }
+
+  @media(max-width:640px){
+    .cards-row{grid-template-columns:1fr 1fr;gap:10px;}
+    .stat-card{padding:12px 14px;}
+    .stat-card .num{font-size:22px;}
+    .welcome-banner{flex-direction:column;align-items:flex-start;padding:18px 20px;}
+    .welcome-banner .greet-date{text-align:left;}
+    .demo-grid{grid-template-columns:1fr;}
+    .panel{padding:16px;}
+    table{font-size:12.5px;}
+    table{min-width:520px;}
+    .who .meta{display:none;}
+    .student-head{flex-direction:column;align-items:flex-start;}
+  }
+
+  @media(max-width:420px){
+    .cards-row{grid-template-columns:1fr;}
+    .login-form h2{font-size:22px;}
+  }
 </style>
 </head>
 <body>
@@ -321,7 +376,8 @@
 
 <!-- ================= APP ================= -->
 <div id="app-screen">
-  <div class="sidebar">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
     <div class="brand">Elo Escolar</div>
     <button class="nav-item active" data-view="painel"><span class="ico">◆</span> Painel</button>
     <button class="nav-item" data-view="alunos"><span class="ico">▤</span> Alunos</button>
@@ -336,9 +392,12 @@
 
   <div class="main">
     <div class="topbar">
-      <div>
-        <h1 id="view-title">Painel</h1>
-        <div class="sub" id="view-sub">Visão geral de hoje</div>
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menu">☰</button>
+        <div>
+          <h1 id="view-title">Painel</h1>
+          <div class="sub" id="view-sub">Visão geral de hoje</div>
+        </div>
       </div>
       <div class="who">
         <div class="avatar" id="who-initials">P</div>
@@ -357,8 +416,8 @@
         <div>
           <div class="panel">
             <h3>Pendências para você</h3>
-            <table><thead><tr><th>Aluno</th><th>Tipo</th><th>Assunto</th><th>Status</th></tr></thead>
-            <tbody id="painel-pendencias"></tbody></table>
+            <div class="table-scroll"><table><thead><tr><th>Aluno</th><th>Tipo</th><th>Assunto</th><th>Status</th></tr></thead>
+            <tbody id="painel-pendencias"></tbody></table></div>
           </div>
           <div class="panel">
             <h3>Últimas atualizações da rede</h3>
@@ -388,14 +447,16 @@
     <!-- ALUNOS -->
     <div class="view" id="view-alunos">
       <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
           <h3 style="margin:0;">Alunos acompanhados</h3>
           <button class="btn-fill" id="btn-novo-aluno" style="display:none;" onclick="abrirModalNovoAluno()">+ Novo aluno</button>
         </div>
+        <div class="table-scroll">
         <table>
           <thead><tr><th>Nome</th><th>Turma</th><th>Frequência</th><th>Alertas</th><th></th></tr></thead>
           <tbody id="alunos-tbody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -418,10 +479,12 @@
     <div class="view" id="view-encaminhamentos">
       <div class="panel">
         <h3>Encaminhamentos da rede</h3>
+        <div class="table-scroll">
         <table>
           <thead><tr><th>Aluno</th><th>De</th><th>Para</th><th>Motivo</th><th>Urgência</th><th>Status</th></tr></thead>
           <tbody id="enc-tbody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -429,12 +492,14 @@
     <div class="view" id="view-mensagens">
       <div class="panel">
         <h3>Conversas recentes</h3>
+        <div class="table-scroll">
         <table><thead><tr><th>Com</th><th>Sobre</th><th>Última mensagem</th></tr></thead>
         <tbody>
           <tr><td>Profa. Renata (Português)</td><td>Ana Beatriz Souza</td><td>"Melhorou a participação essa semana."</td></tr>
           <tr><td>Enf. Marcos</td><td>Lucas Martins</td><td>"Bombinha de asma reposta na sala de saúde."</td></tr>
           <tr><td>Coordenação</td><td>Gabriel Ferreira</td><td>"Reunião com responsáveis marcada p/ sexta."</td></tr>
         </tbody></table>
+        </div>
       </div>
     </div>
 
@@ -448,12 +513,14 @@
       </div>
       <div class="panel">
         <h3>Indicadores por turma</h3>
+        <div class="table-scroll">
         <table><thead><tr><th>Turma</th><th>Frequência</th><th>Alertas psicossociais</th><th>Alertas de saúde</th></tr></thead>
         <tbody>
           <tr><td>6º A</td><td>94%</td><td>1</td><td>2</td></tr>
           <tr><td>7º B</td><td>88%</td><td>3</td><td>1</td></tr>
           <tr><td>9º C</td><td>91%</td><td>2</td><td>0</td></tr>
         </tbody></table>
+        </div>
       </div>
     </div>
 
@@ -461,12 +528,14 @@
     <div class="view" id="view-auditoria">
       <div class="panel">
         <h3>Log de acessos a registros sensíveis</h3>
+        <div class="table-scroll">
         <table><thead><tr><th>Quem acessou</th><th>Perfil</th><th>Aluno</th><th>Aba</th><th>Quando</th></tr></thead>
         <tbody>
           <tr><td>Renata Alves</td><td>Professor(a)</td><td>Ana Beatriz Souza</td><td>Visão Geral</td><td class="mono">06/07 14:22</td></tr>
           <tr><td>Marcos Lima</td><td>Saúde</td><td>Lucas Martins</td><td>Saúde</td><td class="mono">06/07 10:03</td></tr>
           <tr><td>Juliana Prado</td><td>Psicóloga</td><td>Gabriel Ferreira</td><td>Psicossocial</td><td class="mono">05/07 16:47</td></tr>
         </tbody></table>
+        </div>
       </div>
     </div>
   </div>
@@ -715,6 +784,15 @@ function entrarDemo(perfilKey){
   aplicarSessaoNaTela();
 }
 
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('active');
+}
+function fecharSidebarMobile(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('active');
+}
+
 function aplicarSessaoNaTela(){
   const p = perfis[sessao];
   document.getElementById('who-name').textContent = p.nome;
@@ -743,7 +821,10 @@ async function sair(){
 }
 
 document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
-  btn.addEventListener('click', ()=> mudarView(btn.dataset.view));
+  btn.addEventListener('click', ()=>{
+    mudarView(btn.dataset.view);
+    fecharSidebarMobile();
+  });
 });
 
 function mudarView(view){
@@ -764,6 +845,7 @@ function mudarView(view){
   };
   document.getElementById('view-title').textContent = titulos[view][0];
   document.getElementById('view-sub').textContent = titulos[view][1];
+  window.scrollTo(0,0);
 }
 
 function chipAlerta(alerta){
