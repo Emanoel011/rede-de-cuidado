@@ -573,14 +573,11 @@ async function fazerCadastro(){
   if(!nome || !email || !senha) return mostrarErro('cadastro-erro','Preencha todos os campos.');
   if(senha.length < 8) return mostrarErro('cadastro-erro','A senha precisa ter pelo menos 8 caracteres.');
 
-  const { data, error } = await supa.auth.signUp({ email, password: senha });
-  if(error) return mostrarErro('cadastro-erro', 'Não foi possível criar a conta: ' + error.message);
-
-  // Cria o perfil pendente (ativo=false) — só a coordenação pode ativar depois
-  const { error: erroPerfil } = await supa.from('profiles').insert({
-    id: data.user.id, nome, papel, ativo: false
+  const { data, error } = await supa.auth.signUp({
+    email, password: senha,
+    options: { data: { nome, papel } } // o trigger no banco usa isso para criar o perfil
   });
-  if(erroPerfil) return mostrarErro('cadastro-erro','Conta criada, mas houve um erro ao registrar o perfil. Fale com a coordenação.');
+  if(error) return mostrarErro('cadastro-erro', 'Não foi possível criar a conta: ' + error.message);
 
   mostrarOk('cadastro-ok','Solicitação enviada! Confirme seu e-mail e aguarde a aprovação da coordenação para acessar o sistema.');
 }
@@ -594,8 +591,11 @@ async function enviarRecuperacao(){
   const email = document.getElementById('rec-email').value.trim();
   if(!email) return mostrarErro('recuperar-erro','Informe seu e-mail.');
 
-  // redireciona para reset-senha.html, hospedado no mesmo GitHub Pages
-  const redirectUrl = window.location.origin + window.location.pathname.replace('elo-escolar.html','reset-senha.html');
+  // redireciona para reset-senha.html, que fica na mesma pasta deste arquivo
+  // (calculado pela pasta atual, não pelo nome do arquivo — funciona tanto
+  // em elo-escolar.html quanto em index.html)
+  const pastaAtual = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+  const redirectUrl = pastaAtual + 'reset-senha.html';
 
   const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
   // Por segurança, sempre mostramos a mesma mensagem, exista ou não o e-mail cadastrado
