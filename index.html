@@ -385,6 +385,7 @@
     <button class="nav-item" data-view="mensagens"><span class="ico">✉</span> Mensagens</button>
     <button class="nav-item" data-view="relatorios"><span class="ico">▦</span> Relatórios</button>
     <button class="nav-item" data-view="auditoria" id="nav-auditoria"><span class="ico">◎</span> Auditoria</button>
+    <button class="nav-item" data-view="permissoes" id="nav-permissoes"><span class="ico">⚙</span> Permissões</button>
     <div class="sidebar-foot">
       Dados sensíveis protegidos conforme LGPD. Acesso registrado e segmentado por perfil.
     </div>
@@ -494,32 +495,19 @@
         <h3>Conversas recentes</h3>
         <div class="table-scroll">
         <table><thead><tr><th>Com</th><th>Sobre</th><th>Última mensagem</th></tr></thead>
-        <tbody>
-          <tr><td>Profa. Renata (Português)</td><td>Ana Beatriz Souza</td><td>"Melhorou a participação essa semana."</td></tr>
-          <tr><td>Enf. Marcos</td><td>Lucas Martins</td><td>"Bombinha de asma reposta na sala de saúde."</td></tr>
-          <tr><td>Coordenação</td><td>Gabriel Ferreira</td><td>"Reunião com responsáveis marcada p/ sexta."</td></tr>
-        </tbody></table>
+        <tbody id="mensagens-tbody"></tbody></table>
         </div>
       </div>
     </div>
 
     <!-- RELATORIOS -->
     <div class="view" id="view-relatorios">
-      <div class="cards-row">
-        <div class="stat-card"><div class="num">92%</div><div class="lbl">Frequência média geral</div></div>
-        <div class="stat-card warn"><div class="num">7</div><div class="lbl">Alunos em alerta ativo</div></div>
-        <div class="stat-card"><div class="num">14</div><div class="lbl">Encaminhamentos no mês</div></div>
-        <div class="stat-card"><div class="num">2.3 dias</div><div class="lbl">Tempo médio de resposta</div></div>
-      </div>
+      <div class="cards-row" id="relatorios-cards"></div>
       <div class="panel">
         <h3>Indicadores por turma</h3>
         <div class="table-scroll">
         <table><thead><tr><th>Turma</th><th>Frequência</th><th>Alertas psicossociais</th><th>Alertas de saúde</th></tr></thead>
-        <tbody>
-          <tr><td>6º A</td><td>94%</td><td>1</td><td>2</td></tr>
-          <tr><td>7º B</td><td>88%</td><td>3</td><td>1</td></tr>
-          <tr><td>9º C</td><td>91%</td><td>2</td><td>0</td></tr>
-        </tbody></table>
+        <tbody id="relatorios-turma-tbody"></tbody></table>
         </div>
       </div>
     </div>
@@ -530,11 +518,37 @@
         <h3>Log de acessos a registros sensíveis</h3>
         <div class="table-scroll">
         <table><thead><tr><th>Quem acessou</th><th>Perfil</th><th>Aluno</th><th>Aba</th><th>Quando</th></tr></thead>
-        <tbody>
-          <tr><td>Renata Alves</td><td>Professor(a)</td><td>Ana Beatriz Souza</td><td>Visão Geral</td><td class="mono">06/07 14:22</td></tr>
-          <tr><td>Marcos Lima</td><td>Saúde</td><td>Lucas Martins</td><td>Saúde</td><td class="mono">06/07 10:03</td></tr>
-          <tr><td>Juliana Prado</td><td>Psicóloga</td><td>Gabriel Ferreira</td><td>Psicossocial</td><td class="mono">05/07 16:47</td></tr>
-        </tbody></table>
+        <tbody id="auditoria-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERMISSÕES (somente coordenação) -->
+    <div class="view" id="view-permissoes">
+      <div id="permissoes-aviso"></div>
+
+      <div class="panel" id="painel-contas-pendentes">
+        <h3>Contas aguardando aprovação</h3>
+        <div class="table-scroll">
+        <table><thead><tr><th>Nome</th><th>E-mail</th><th>Papel solicitado</th><th></th></tr></thead>
+        <tbody id="pendentes-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="panel" id="painel-contas-ativas">
+        <h3>Contas ativas</h3>
+        <div class="table-scroll">
+        <table><thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th></th></tr></thead>
+        <tbody id="ativas-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="panel" id="painel-matriz-permissoes">
+        <h3>Quem vê o quê no prontuário do aluno</h3>
+        <p class="tela-desc" style="margin-bottom:14px;">Marque quais cargos podem visualizar cada aba do prontuário. Vale para todos os alunos.</p>
+        <div class="table-scroll">
+        <table id="matriz-permissoes-table"><thead><tr><th>Aba do prontuário</th><th>Professor(a)</th><th>Psicóloga</th><th>Saúde</th><th>Coordenação</th></tr></thead>
+        <tbody id="matriz-permissoes-tbody"></tbody></table>
         </div>
       </div>
     </div>
@@ -698,14 +712,16 @@ async function enviarRecuperacao(){
 }
 
 /* ---------- ENTRAR COM PERFIL REAL (vindo do Supabase) ---------- */
-function entrarComPerfilReal(perfil){
+async function entrarComPerfilReal(perfil){
   sessao = perfil.papel;
   sessaoReal = true;
   usuarioId = perfil.id;
   perfis[sessao].nome = perfil.nome; // sincroniza nome real no objeto de exibição
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').classList.add('active');
+  await carregarPermissoes();
   aplicarSessaoNaTela();
+  iniciarRealtime();
 }
 
 const perfis = {
@@ -715,7 +731,9 @@ const perfis = {
   coordenacao: {label:"Coordenação / Gestão", nome:"Fernanda Costa", cor:"#B7C6E8"},
 };
 
-// visibilidade: quais perfis veem a aba completa
+// visibilidade padrão: usada no modo demonstração e como fallback
+// enquanto a matriz de permissões real (tabela "permissoes" no Supabase)
+// ainda não foi carregada.
 const visibilidade = {
   pedagogico:   ["professor","coordenacao"],
   psicossocial: ["psicologa","coordenacao"],
@@ -724,6 +742,34 @@ const visibilidade = {
   timeline:     ["professor","psicologa","saude","coordenacao"],
   encaminhamentos: ["professor","psicologa","saude","coordenacao"],
 };
+
+// nomes amigáveis usados na tela de Permissões
+const ABAS_LABELS = {
+  pedagogico: "Pedagógico", psicossocial: "Psicossocial", saude: "Saúde",
+  visaogeral: "Visão Geral", timeline: "Linha do Tempo", encaminhamentos: "Encaminhamentos",
+};
+const PAPEIS_LIST = ["professor","psicologa","saude","coordenacao"];
+
+// carregada do Supabase (tabela "permissoes") quando em sessão real;
+// enquanto não carrega, ou no modo demonstração, usamos "visibilidade" acima.
+let visibilidadeDinamica = null;
+
+async function carregarPermissoes(){
+  if(!sessaoReal) return;
+  const { data, error } = await supa.from('permissoes').select('*');
+  if(error || !data){ visibilidadeDinamica = null; return; }
+  const mapa = {};
+  Object.keys(ABAS_LABELS).forEach(aba => mapa[aba] = []);
+  data.forEach(r=>{
+    if(r.pode_ver && mapa[r.aba]) mapa[r.aba].push(r.papel);
+  });
+  visibilidadeDinamica = mapa;
+}
+
+function podeVerAba(aba, papel){
+  const mapa = (sessaoReal && visibilidadeDinamica) ? visibilidadeDinamica : visibilidade;
+  return (mapa[aba] || []).includes(papel);
+}
 
 // tabela real usada por cada aba (para escrita/leitura no Supabase)
 const tabelaPorAba = {
@@ -774,6 +820,7 @@ let sessaoReal = false;  // true = logado de verdade via Supabase | false = modo
 let usuarioId = null;    // id do profile logado (só existe em sessão real)
 let alunoAtual = null;   // aluno aberto no momento (objeto local ou vindo do Supabase)
 let alunosReal = [];     // cache da lista de alunos reais
+let canalRealtime = null; // canal do Supabase Realtime (sessão real)
 
 function entrarDemo(perfilKey){
   sessao = perfilKey;
@@ -801,8 +848,9 @@ function aplicarSessaoNaTela(){
   document.getElementById('who-initials').style.background = p.cor+'55';
   document.getElementById('who-initials').style.color = p.cor;
 
-  // Auditoria só pra coordenação
+  // Auditoria e Permissões só pra coordenação
   document.getElementById('nav-auditoria').style.display = (sessao==='coordenacao') ? 'flex' : 'none';
+  document.getElementById('nav-permissoes').style.display = (sessao==='coordenacao') ? 'flex' : 'none';
   // Cadastrar aluno: só quem tem permissão de escrita na tabela alunos (coordenação) e em sessão real
   document.getElementById('btn-novo-aluno').style.display = (sessaoReal && sessao==='coordenacao') ? 'inline-block' : 'none';
 
@@ -812,9 +860,14 @@ function aplicarSessaoNaTela(){
   mudarView('painel');
 }
 
+function pararRealtime(){
+  if(canalRealtime){ supa.removeChannel(canalRealtime); canalRealtime = null; }
+}
+
 async function sair(){
+  pararRealtime();
   if(supa) await supa.auth.signOut();
-  sessaoReal = false; usuarioId = null; sessao = null;
+  sessaoReal = false; usuarioId = null; sessao = null; visibilidadeDinamica = null;
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app-screen').classList.remove('active');
   irPara('login');
@@ -842,10 +895,16 @@ function mudarView(view){
     mensagens:["Mensagens","Conversas diretas entre profissionais"],
     relatorios:["Relatórios","Indicadores agregados da escola"],
     auditoria:["Auditoria","Quem acessou o quê, e quando"],
+    permissoes:["Permissões","Ative contas novas e defina quem vê cada informação"],
   };
   document.getElementById('view-title').textContent = titulos[view][0];
   document.getElementById('view-sub').textContent = titulos[view][1];
   window.scrollTo(0,0);
+
+  if(view==='mensagens') montarMensagens();
+  if(view==='relatorios') montarRelatorios();
+  if(view==='auditoria') montarAuditoria();
+  if(view==='permissoes') montarPermissoes();
 }
 
 function chipAlerta(alerta){
@@ -1017,6 +1076,248 @@ async function montarEncaminhamentos(){
     </tr>`).join('') : `<tr><td colspan="6" style="color:var(--ink-soft);text-align:center;padding:16px;">Nenhum encaminhamento registrado ainda.</td></tr>`;
 }
 
+/* =====================================================================
+   MENSAGENS
+   ===================================================================== */
+const conversasDemo = [
+  {com:"Profa. Renata (Português)", sobre:"Ana Beatriz Souza", ultima:"Melhorou a participação essa semana."},
+  {com:"Enf. Marcos", sobre:"Lucas Martins", ultima:"Bombinha de asma reposta na sala de saúde."},
+  {com:"Coordenação", sobre:"Gabriel Ferreira", ultima:"Reunião com responsáveis marcada p/ sexta."},
+];
+function montarMensagens(){
+  const tbody = document.getElementById('mensagens-tbody');
+  if(!sessaoReal){
+    tbody.innerHTML = conversasDemo.map(c=>`<tr><td>${c.com}</td><td>${c.sobre}</td><td>"${c.ultima}"</td></tr>`).join('');
+    return;
+  }
+  // Sem uma tabela de mensagens configurada no Supabase ainda: fica vazio até você criar essa funcionalidade.
+  tbody.innerHTML = `<tr><td colspan="3" style="color:var(--ink-soft);text-align:center;padding:16px;">Nenhuma conversa ainda. A mensageria em tempo real ainda não foi conectada a uma tabela no banco.</td></tr>`;
+}
+
+/* =====================================================================
+   RELATÓRIOS
+   ===================================================================== */
+async function montarRelatorios(){
+  const cards = document.getElementById('relatorios-cards');
+  const turmaTbody = document.getElementById('relatorios-turma-tbody');
+
+  if(!sessaoReal){
+    cards.innerHTML = `
+      <div class="stat-card"><div class="num">92%</div><div class="lbl">Frequência média geral</div></div>
+      <div class="stat-card warn"><div class="num">7</div><div class="lbl">Alunos em alerta ativo</div></div>
+      <div class="stat-card"><div class="num">14</div><div class="lbl">Encaminhamentos no mês</div></div>
+      <div class="stat-card"><div class="num">2.3 dias</div><div class="lbl">Tempo médio de resposta</div></div>`;
+    turmaTbody.innerHTML = `
+      <tr><td>6º A</td><td>94%</td><td>1</td><td>2</td></tr>
+      <tr><td>7º B</td><td>88%</td><td>3</td><td>1</td></tr>
+      <tr><td>9º C</td><td>91%</td><td>2</td><td>0</td></tr>`;
+    return;
+  }
+
+  const { data: alunosData } = await supa.from('alunos').select('*');
+  const alunos = alunosData || [];
+  const comFreq = alunos.filter(a => a.frequencia !== null && a.frequencia !== undefined);
+  const freqMedia = comFreq.length ? Math.round(comFreq.reduce((s,a)=>s+Number(a.frequencia),0)/comFreq.length) : null;
+  const emAlerta = alunos.filter(a => a.frequencia !== null && a.frequencia < 90).length;
+
+  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
+  const { data: encData } = await supa.from('encaminhamentos').select('id, criado_em').gte('criado_em', inicioMes.toISOString());
+
+  cards.innerHTML = `
+    <div class="stat-card"><div class="num">${freqMedia !== null ? freqMedia+'%' : '—'}</div><div class="lbl">Frequência média geral</div></div>
+    <div class="stat-card warn"><div class="num">${emAlerta}</div><div class="lbl">Alunos em alerta ativo</div></div>
+    <div class="stat-card"><div class="num">${encData ? encData.length : 0}</div><div class="lbl">Encaminhamentos no mês</div></div>
+    <div class="stat-card"><div class="num">—</div><div class="lbl">Tempo médio de resposta</div></div>`;
+
+  const { data: regPsico } = await supa.from('registros_psicossociais').select('aluno_id');
+  const { data: regSaude } = await supa.from('registros_saude').select('aluno_id');
+
+  const turmas = {};
+  alunos.forEach(a=>{
+    if(!turmas[a.turma]) turmas[a.turma] = {somaFreq:0, qtdFreq:0, psico:0, saude:0, ids:new Set()};
+    turmas[a.turma].ids.add(a.id);
+    if(a.frequencia !== null && a.frequencia !== undefined){ turmas[a.turma].somaFreq += Number(a.frequencia); turmas[a.turma].qtdFreq++; }
+  });
+  (regPsico||[]).forEach(r=>{ for(const t in turmas){ if(turmas[t].ids.has(r.aluno_id)) turmas[t].psico++; } });
+  (regSaude||[]).forEach(r=>{ for(const t in turmas){ if(turmas[t].ids.has(r.aluno_id)) turmas[t].saude++; } });
+
+  const turmaKeys = Object.keys(turmas).sort();
+  turmaTbody.innerHTML = turmaKeys.length ? turmaKeys.map(t=>{
+    const d = turmas[t];
+    const freq = d.qtdFreq ? Math.round(d.somaFreq/d.qtdFreq)+'%' : '—';
+    return `<tr><td>${t}</td><td>${freq}</td><td>${d.psico}</td><td>${d.saude}</td></tr>`;
+  }).join('') : `<tr><td colspan="4" style="color:var(--ink-soft);text-align:center;padding:16px;">Sem alunos cadastrados ainda.</td></tr>`;
+}
+
+/* =====================================================================
+   AUDITORIA
+   ===================================================================== */
+async function montarAuditoria(){
+  const tbody = document.getElementById('auditoria-tbody');
+  if(!sessaoReal){
+    tbody.innerHTML = `
+      <tr><td>Renata Alves</td><td>Professor(a)</td><td>Ana Beatriz Souza</td><td>Visão Geral</td><td class="mono">06/07 14:22</td></tr>
+      <tr><td>Marcos Lima</td><td>Saúde</td><td>Lucas Martins</td><td>Saúde</td><td class="mono">06/07 10:03</td></tr>
+      <tr><td>Juliana Prado</td><td>Psicóloga</td><td>Gabriel Ferreira</td><td>Psicossocial</td><td class="mono">05/07 16:47</td></tr>`;
+    return;
+  }
+
+  const { data, error } = await supa.from('log_auditoria')
+    .select('*, profiles(nome), alunos(nome)')
+    .order('criado_em', { ascending:false })
+    .limit(50);
+
+  if(error || !data || !data.length){
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--ink-soft);text-align:center;padding:16px;">Nenhum acesso registrado ainda.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(r=>`
+    <tr>
+      <td>${r.profiles ? r.profiles.nome : '—'}</td>
+      <td>${perfis[r.papel] ? perfis[r.papel].label : (r.papel || '—')}</td>
+      <td>${r.alunos ? r.alunos.nome : '—'}</td>
+      <td>${ABAS_LABELS[r.aba] || r.aba}</td>
+      <td class="mono">${new Date(r.criado_em).toLocaleString('pt-BR')}</td>
+    </tr>`).join('');
+}
+
+/* =====================================================================
+   PERMISSÕES (somente coordenação)
+   ===================================================================== */
+async function montarPermissoes(){
+  const aviso = document.getElementById('permissoes-aviso');
+  const paineis = [document.getElementById('painel-contas-pendentes'), document.getElementById('painel-contas-ativas'), document.getElementById('painel-matriz-permissoes')];
+
+  if(!sessaoReal){
+    aviso.innerHTML = `<div class="panel"><p style="margin:0;color:var(--ink-soft);font-size:13.5px;">Esta tela só funciona conectada ao Supabase (sessão real). No modo demonstração não há contas nem permissões reais para gerenciar.</p></div>`;
+    paineis.forEach(p=>p.style.display='none');
+    return;
+  }
+  aviso.innerHTML = '';
+  paineis.forEach(p=>p.style.display='block');
+
+  await montarContasPendentes();
+  await montarContasAtivas();
+  await montarMatrizPermissoes();
+}
+
+async function montarContasPendentes(){
+  const tbody = document.getElementById('pendentes-tbody');
+  const { data, error } = await supa.from('profiles').select('*').eq('ativo', false).order('nome');
+  if(error || !data || !data.length){
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--ink-soft);text-align:center;padding:16px;">Nenhuma conta aguardando aprovação.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(u=>`
+    <tr>
+      <td>${u.nome || '—'}</td>
+      <td>${u.email || '—'}</td>
+      <td>${perfis[u.papel] ? perfis[u.papel].label : (u.papel || '—')}</td>
+      <td><button class="btn-fill" onclick="ativarConta('${u.id}')">Ativar</button></td>
+    </tr>`).join('');
+}
+
+async function montarContasAtivas(){
+  const tbody = document.getElementById('ativas-tbody');
+  const { data, error } = await supa.from('profiles').select('*').eq('ativo', true).order('nome');
+  if(error || !data || !data.length){
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--ink-soft);text-align:center;padding:16px;">Nenhuma conta ativa ainda.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(u=>`
+    <tr>
+      <td>${u.nome || '—'}</td>
+      <td>${u.email || '—'}</td>
+      <td>
+        <select onchange="alterarPapelConta('${u.id}', this.value)">
+          ${PAPEIS_LIST.map(p=>`<option value="${p}" ${p===u.papel?'selected':''}>${perfis[p].label}</option>`).join('')}
+        </select>
+      </td>
+      <td>${u.id===usuarioId ? '' : `<button class="btn-outline" onclick="desativarConta('${u.id}')">Desativar</button>`}</td>
+    </tr>`).join('');
+}
+
+async function ativarConta(id){
+  const { error } = await supa.from('profiles').update({ ativo: true }).eq('id', id);
+  if(error){ alert('Não foi possível ativar: ' + error.message); return; }
+  montarContasPendentes();
+  montarContasAtivas();
+}
+async function desativarConta(id){
+  const { error } = await supa.from('profiles').update({ ativo: false }).eq('id', id);
+  if(error){ alert('Não foi possível desativar: ' + error.message); return; }
+  montarContasPendentes();
+  montarContasAtivas();
+}
+async function alterarPapelConta(id, novoPapel){
+  const { error } = await supa.from('profiles').update({ papel: novoPapel }).eq('id', id);
+  if(error){ alert('Não foi possível alterar o papel: ' + error.message); return; }
+  montarContasAtivas();
+}
+
+async function montarMatrizPermissoes(){
+  const tbody = document.getElementById('matriz-permissoes-tbody');
+  const { data } = await supa.from('permissoes').select('*');
+  const atual = {};
+  (data||[]).forEach(r=>{ atual[r.aba+'|'+r.papel] = r.pode_ver; });
+
+  tbody.innerHTML = Object.keys(ABAS_LABELS).map(aba=>{
+    const celulas = PAPEIS_LIST.map(papel=>{
+      const marcado = atual[aba+'|'+papel] ?? (visibilidade[aba]||[]).includes(papel);
+      return `<td style="text-align:center;"><input type="checkbox" style="width:auto;" ${marcado?'checked':''} onchange="togglePermissao('${aba}','${papel}', this.checked)"></td>`;
+    }).join('');
+    return `<tr><td>${ABAS_LABELS[aba]}</td>${celulas}</tr>`;
+  }).join('');
+}
+
+async function togglePermissao(aba, papel, valor){
+  const { error } = await supa.from('permissoes').upsert(
+    { aba, papel, pode_ver: valor },
+    { onConflict: 'papel,aba' }
+  );
+  if(error){ alert('Não foi possível salvar a permissão: ' + error.message); return; }
+  await carregarPermissoes();
+}
+
+/* =====================================================================
+   TEMPO REAL (Supabase Realtime)
+   ===================================================================== */
+function iniciarRealtime(){
+  if(!sessaoReal || canalRealtime) return;
+
+  canalRealtime = supa.channel('elo-escolar-rede')
+    .on('postgres_changes', { event:'*', schema:'public', table:'alunos' }, ()=>{
+      montarAlunos(); montarPainel();
+      if(document.getElementById('view-relatorios').classList.contains('active')) montarRelatorios();
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'encaminhamentos' }, ()=>{
+      montarEncaminhamentos(); montarPainel();
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'linha_tempo' }, ()=>{
+      montarPainel();
+      atualizarAbaAtualSeAberta('timeline');
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'registros_pedagogicos' }, ()=> atualizarAbaAtualSeAberta('pedagogico'))
+    .on('postgres_changes', { event:'*', schema:'public', table:'registros_psicossociais' }, ()=> atualizarAbaAtualSeAberta('psicossocial'))
+    .on('postgres_changes', { event:'*', schema:'public', table:'registros_saude' }, ()=> atualizarAbaAtualSeAberta('saude'))
+    .on('postgres_changes', { event:'*', schema:'public', table:'profiles' }, ()=>{
+      if(sessao==='coordenacao' && document.getElementById('view-permissoes').classList.contains('active')){
+        montarContasPendentes(); montarContasAtivas();
+      }
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'log_auditoria' }, ()=>{
+      if(sessao==='coordenacao' && document.getElementById('view-auditoria').classList.contains('active')) montarAuditoria();
+    })
+    .subscribe();
+}
+
+function atualizarAbaAtualSeAberta(aba){
+  if(!alunoAtual || !document.getElementById('view-perfil').classList.contains('active')) return;
+  const abaAtiva = document.querySelector('.tab-btn.active');
+  if(abaAtiva && ABAS_LABELS[aba] === abaAtiva.textContent.trim()) mostrarAba(aba, abaAtiva);
+}
+
 function corPapel(papel){ return perfis[papel] ? perfis[papel].cor : '#999'; }
 
 function renderTimelineItemDemo(e){
@@ -1088,12 +1389,19 @@ async function mostrarAba(id, btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
 
-  const podeVer = visibilidade[id].includes(sessao);
+  const podeVer = podeVerAba(id, sessao);
   const el = document.getElementById('perfil-conteudo');
 
   if(!podeVer){
     el.innerHTML = `<div class="locked-box"><b>Conteúdo restrito</b>Esta aba é visível apenas para os perfis responsáveis por este tipo de informação, conforme as regras de privacidade da escola.</div>`;
     return;
+  }
+
+  // registra no log de auditoria (só em sessão real, e só quando um aluno está aberto)
+  if(sessaoReal && alunoAtual && alunoAtual.id){
+    supa.from('log_auditoria').insert({
+      usuario_id: usuarioId, papel: sessao, aluno_id: alunoAtual.id, aba: id
+    }).then(()=>{}).catch(()=>{});
   }
 
   if(!sessaoReal){
