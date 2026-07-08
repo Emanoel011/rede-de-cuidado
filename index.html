@@ -548,7 +548,12 @@ async function fazerLogin(){
   if(!email || !senha) return mostrarErro('login-erro','Preencha e-mail e senha.');
 
   const { data, error } = await supa.auth.signInWithPassword({ email, password: senha });
-  if(error) return mostrarErro('login-erro', 'Não foi possível entrar: e-mail ou senha inválidos.');
+  if(error){
+    if(error.message.toLowerCase().includes('email not confirmed')){
+      return mostrarErro('login-erro','Você ainda não confirmou seu e-mail. Verifique sua caixa de entrada (e a de spam).');
+    }
+    return mostrarErro('login-erro', 'Não foi possível entrar: ' + error.message);
+  }
 
   const { data: perfil, error: erroPerfil } = await supa
     .from('profiles').select('*').eq('id', data.user.id).single();
