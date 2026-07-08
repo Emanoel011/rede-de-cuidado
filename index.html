@@ -388,7 +388,10 @@
     <!-- ALUNOS -->
     <div class="view" id="view-alunos">
       <div class="panel">
-        <h3>Alunos acompanhados</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h3 style="margin:0;">Alunos acompanhados</h3>
+          <button class="btn-fill" id="btn-novo-aluno" style="display:none;" onclick="abrirModalNovoAluno()">+ Novo aluno</button>
+        </div>
         <table>
           <thead><tr><th>Nome</th><th>Turma</th><th>Frequência</th><th>Alertas</th><th></th></tr></thead>
           <tbody id="alunos-tbody"></tbody>
@@ -492,6 +495,23 @@
     <input type="text" id="enc-desc" placeholder="Descreva brevemente o motivo...">
     <button class="primary-btn" onclick="confirmarEncaminhamento()">Enviar encaminhamento</button>
     <button class="cancel-link" onclick="fecharModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: NOVO ALUNO -->
+<div class="modal-overlay" id="modal-novo-aluno">
+  <div class="modal">
+    <h3>Cadastrar novo aluno</h3>
+    <label>Nome completo</label>
+    <input type="text" id="na-nome" placeholder="Nome do aluno">
+    <label>Turma</label>
+    <input type="text" id="na-turma" placeholder="Ex: 7º B">
+    <label>Frequência atual (%, opcional)</label>
+    <input type="text" id="na-frequencia" placeholder="Ex: 92">
+    <label>E-mail do responsável (opcional)</label>
+    <input type="text" id="na-responsavel" placeholder="responsavel@email.com">
+    <button class="primary-btn" onclick="confirmarNovoAluno()">Cadastrar aluno</button>
+    <button class="cancel-link" onclick="fecharModalNovoAluno()">Cancelar</button>
   </div>
 </div>
 
@@ -611,6 +631,8 @@ async function enviarRecuperacao(){
 /* ---------- ENTRAR COM PERFIL REAL (vindo do Supabase) ---------- */
 function entrarComPerfilReal(perfil){
   sessao = perfil.papel;
+  sessaoReal = true;
+  usuarioId = perfil.id;
   perfis[sessao].nome = perfil.nome; // sincroniza nome real no objeto de exibição
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').classList.add('active');
@@ -634,7 +656,15 @@ const visibilidade = {
   encaminhamentos: ["professor","psicologa","saude","coordenacao"],
 };
 
-const alunos = [
+// tabela real usada por cada aba (para escrita/leitura no Supabase)
+const tabelaPorAba = {
+  pedagogico: "registros_pedagogicos",
+  psicossocial: "registros_psicossociais",
+  saude: "registros_saude",
+};
+
+// ---- Dados de exemplo (usados SOMENTE no modo demonstração offline) ----
+const alunosDemo = [
   {
     id:1, nome:"Ana Beatriz Souza", turma:"7º B", freq:"88%",
     alerta:{tipo:"psicossocial", nivel:"alert", texto:"Queda de participação e isolamento"},
@@ -670,11 +700,16 @@ const alunos = [
   },
 ];
 
-let sessao = null; // perfil atual
-let alunoAtual = null;
+let sessao = null;       // papel atual (professor / psicologa / saude / coordenacao)
+let sessaoReal = false;  // true = logado de verdade via Supabase | false = modo demonstração
+let usuarioId = null;    // id do profile logado (só existe em sessão real)
+let alunoAtual = null;   // aluno aberto no momento (objeto local ou vindo do Supabase)
+let alunosReal = [];     // cache da lista de alunos reais
 
 function entrarDemo(perfilKey){
   sessao = perfilKey;
+  sessaoReal = false;
+  usuarioId = null;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').classList.add('active');
   aplicarSessaoNaTela();
@@ -683,13 +718,15 @@ function entrarDemo(perfilKey){
 function aplicarSessaoNaTela(){
   const p = perfis[sessao];
   document.getElementById('who-name').textContent = p.nome;
-  document.getElementById('who-role').textContent = p.label;
+  document.getElementById('who-role').textContent = p.label + (sessaoReal ? '' : ' (demonstração)');
   document.getElementById('who-initials').textContent = p.nome.split(' ').map(w=>w[0]).slice(0,2).join('');
   document.getElementById('who-initials').style.background = p.cor+'55';
   document.getElementById('who-initials').style.color = p.cor;
 
   // Auditoria só pra coordenação
   document.getElementById('nav-auditoria').style.display = (sessao==='coordenacao') ? 'flex' : 'none';
+  // Cadastrar aluno: só quem tem permissão de escrita na tabela alunos (coordenação) e em sessão real
+  document.getElementById('btn-novo-aluno').style.display = (sessaoReal && sessao==='coordenacao') ? 'inline-block' : 'none';
 
   montarPainel();
   montarAlunos();
@@ -699,6 +736,7 @@ function aplicarSessaoNaTela(){
 
 async function sair(){
   if(supa) await supa.auth.signOut();
+  sessaoReal = false; usuarioId = null; sessao = null;
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app-screen').classList.remove('active');
   irPara('login');
@@ -734,58 +772,172 @@ function chipAlerta(alerta){
   return `<span class="chip ${map[alerta.nivel]}">${alerta.texto}</span>`;
 }
 
-function montarPainel(){
+function chipFrequencia(freq){
+  if(freq === null || freq === undefined || freq === '') return '<span class="chip ok">Sem alertas</span>';
+  const n = Number(freq);
+  if(isNaN(n)) return '<span class="chip ok">Sem alertas</span>';
+  return n < 90
+    ? `<span class="chip alert">Frequência baixa (${n}%)</span>`
+    : '<span class="chip ok">Sem alertas</span>';
+}
+
+/* =====================================================================
+   PAINEL
+   ===================================================================== */
+async function montarPainel(){
   const cards = document.getElementById('painel-cards');
+  const pend = document.getElementById('painel-pendencias');
+  const tl = document.getElementById('painel-timeline');
+
+  if(!sessaoReal){
+    cards.innerHTML = `
+      <div class="stat-card"><div class="num">${alunosDemo.length}</div><div class="lbl">Alunos na sua rede</div></div>
+      <div class="stat-card warn"><div class="num">${alunosDemo.filter(a=>a.alerta && a.alerta.nivel==='alert').length}</div><div class="lbl">Alertas ativos</div></div>
+      <div class="stat-card"><div class="num">${alunosDemo.filter(a=>a.alerta && a.alerta.nivel==='pending').length}</div><div class="lbl">Pendências de saúde</div></div>
+      <div class="stat-card"><div class="num">3</div><div class="lbl">Mensagens não lidas</div></div>
+    `;
+    pend.innerHTML = alunosDemo.filter(a=>a.alerta).map(a=>`
+      <tr class="clickable" onclick="abrirPerfil(${a.id})">
+        <td>${a.nome}</td><td>${a.alerta.tipo}</td><td>${a.alerta.texto}</td><td>${chipAlerta(a.alerta)}</td>
+      </tr>`).join('');
+    const todosEventos = alunosDemo.flatMap(a=>a.timeline.map(e=>({...e, aluno:a.nome})))
+      .filter(e => sessao==='coordenacao' || !e.sigiloso || e.papel===sessao).slice(0,5);
+    tl.innerHTML = todosEventos.length ? todosEventos.map(renderTimelineItemDemo).join('') : '<li style="color:var(--ink-soft);">Nenhuma atualização ainda.</li>';
+    return;
+  }
+
+  // ---- modo real: busca tudo do Supabase ----
+  const { data: listaAlunos } = await supa.from('alunos').select('*');
+  const total = listaAlunos ? listaAlunos.length : 0;
+  const comAlerta = (listaAlunos || []).filter(a => a.frequencia !== null && a.frequencia < 90);
+
+  const { data: encPendentes } = await supa.from('encaminhamentos').select('*').eq('status','pendente');
+
   cards.innerHTML = `
-    <div class="stat-card"><div class="num">${alunos.length}</div><div class="lbl">Alunos na sua rede</div></div>
-    <div class="stat-card warn"><div class="num">${alunos.filter(a=>a.alerta && a.alerta.nivel==='alert').length}</div><div class="lbl">Alertas ativos</div></div>
-    <div class="stat-card"><div class="num">${alunos.filter(a=>a.alerta && a.alerta.nivel==='pending').length}</div><div class="lbl">Pendências de saúde</div></div>
-    <div class="stat-card"><div class="num">3</div><div class="lbl">Mensagens não lidas</div></div>
+    <div class="stat-card"><div class="num">${total}</div><div class="lbl">Alunos cadastrados</div></div>
+    <div class="stat-card warn"><div class="num">${comAlerta.length}</div><div class="lbl">Alunos com frequência baixa</div></div>
+    <div class="stat-card"><div class="num">${encPendentes ? encPendentes.length : 0}</div><div class="lbl">Encaminhamentos pendentes</div></div>
+    <div class="stat-card"><div class="num">0</div><div class="lbl">Mensagens não lidas</div></div>
   `;
 
-  const pend = document.getElementById('painel-pendencias');
-  pend.innerHTML = alunos.filter(a=>a.alerta).map(a=>`
-    <tr class="clickable" onclick="abrirPerfil(${a.id})">
-      <td>${a.nome}</td>
-      <td>${a.alerta.tipo}</td>
-      <td>${a.alerta.texto}</td>
-      <td>${chipAlerta(a.alerta)}</td>
-    </tr>`).join('');
+  pend.innerHTML = (comAlerta.length ? comAlerta.map(a=>`
+    <tr class="clickable" onclick="abrirPerfil('${a.id}')">
+      <td>${a.nome}</td><td>frequência</td><td>Frequência abaixo de 90%</td><td>${chipFrequencia(a.frequencia)}</td>
+    </tr>`).join('') : `<tr><td colspan="4" style="color:var(--ink-soft);text-align:center;padding:16px;">Nenhuma pendência no momento.</td></tr>`);
 
-  const tl = document.getElementById('painel-timeline');
-  const todosEventos = alunos.flatMap(a=>a.timeline.map(e=>({...e, aluno:a.nome})))
-    .filter(e => sessao==='coordenacao' || !e.sigiloso || e.papel===sessao)
-    .slice(0,5);
-  tl.innerHTML = todosEventos.map(renderTimelineItem).join('');
+  const { data: eventos } = await supa
+    .from('linha_tempo')
+    .select('*, alunos(nome), profiles(nome)')
+    .order('criado_em', { ascending:false })
+    .limit(5);
+
+  tl.innerHTML = (eventos && eventos.length)
+    ? eventos.map(renderTimelineItemReal).join('')
+    : '<li style="color:var(--ink-soft);">Nenhuma atualização ainda. Abra um aluno e registre algo na Linha do Tempo.</li>';
 }
 
-function montarAlunos(){
+/* =====================================================================
+   LISTA DE ALUNOS
+   ===================================================================== */
+async function montarAlunos(){
   const tbody = document.getElementById('alunos-tbody');
-  tbody.innerHTML = alunos.map(a=>`
-    <tr class="clickable" onclick="abrirPerfil(${a.id})">
+
+  if(!sessaoReal){
+    tbody.innerHTML = alunosDemo.map(a=>`
+      <tr class="clickable" onclick="abrirPerfil(${a.id})">
+        <td>${a.nome}</td><td>${a.turma}</td><td>${a.freq}</td><td>${chipAlerta(a.alerta)}</td>
+        <td><button class="btn-outline" onclick="event.stopPropagation(); abrirPerfil(${a.id})">Abrir</button></td>
+      </tr>`).join('');
+    return;
+  }
+
+  const { data, error } = await supa.from('alunos').select('*').order('nome');
+  alunosReal = data || [];
+
+  tbody.innerHTML = alunosReal.length ? alunosReal.map(a=>`
+    <tr class="clickable" onclick="abrirPerfil('${a.id}')">
       <td>${a.nome}</td>
       <td>${a.turma}</td>
-      <td>${a.freq}</td>
-      <td>${chipAlerta(a.alerta)}</td>
-      <td><button class="btn-outline" onclick="event.stopPropagation(); abrirPerfil(${a.id})">Abrir</button></td>
-    </tr>`).join('');
+      <td>${a.frequencia !== null ? a.frequencia + '%' : '—'}</td>
+      <td>${chipFrequencia(a.frequencia)}</td>
+      <td><button class="btn-outline" onclick="event.stopPropagation(); abrirPerfil('${a.id}')">Abrir</button></td>
+    </tr>`).join('')
+    : `<tr><td colspan="5" style="color:var(--ink-soft);text-align:center;padding:20px;">
+        Nenhum aluno cadastrado ainda.${sessao==='coordenacao' ? ' Clique em "+ Novo aluno" para começar.' : ' Peça para a coordenação cadastrar os alunos.'}
+       </td></tr>`;
 }
 
-function montarEncaminhamentos(){
-  const dados = [
-    {aluno:"Ana Beatriz Souza", de:"Professor(a)", para:"Psicóloga escolar", motivo:"Isolamento social", urg:"Atenção", status:"Em andamento"},
-    {aluno:"Lucas Martins", de:"Saúde", para:"Coordenação", motivo:"Ajuste de plano de emergência (asma)", urg:"Rotina", status:"Concluído"},
-    {aluno:"Gabriel Ferreira", de:"Coordenação", para:"Professor(a)", motivo:"Reforço em Matemática", urg:"Rotina", status:"Pendente"},
-  ];
-  const map = {"Em andamento":"pending","Concluído":"ok","Pendente":"info"};
-  document.getElementById('enc-tbody').innerHTML = dados.map(d=>`
-    <tr><td>${d.aluno}</td><td>${d.de}</td><td>${d.para}</td><td>${d.motivo}</td><td>${d.urg}</td>
-    <td><span class="chip ${map[d.status]}">${d.status}</span></td></tr>`).join('');
+/* ---- Modal: novo aluno ---- */
+function abrirModalNovoAluno(){
+  document.getElementById('na-nome').value = '';
+  document.getElementById('na-turma').value = '';
+  document.getElementById('na-frequencia').value = '';
+  document.getElementById('na-responsavel').value = '';
+  document.getElementById('modal-novo-aluno').classList.add('active');
+}
+function fecharModalNovoAluno(){
+  document.getElementById('modal-novo-aluno').classList.remove('active');
+}
+async function confirmarNovoAluno(){
+  const nome = document.getElementById('na-nome').value.trim();
+  const turma = document.getElementById('na-turma').value.trim();
+  const freqTxt = document.getElementById('na-frequencia').value.trim();
+  const responsavel = document.getElementById('na-responsavel').value.trim();
+
+  if(!nome || !turma){ alert('Preencha ao menos nome e turma.'); return; }
+
+  const { error } = await supa.from('alunos').insert({
+    nome, turma,
+    frequencia: freqTxt ? Number(freqTxt) : null,
+    responsavel_email: responsavel || null
+  });
+
+  if(error){ alert('Não foi possível cadastrar: ' + error.message); return; }
+
+  fecharModalNovoAluno();
+  montarAlunos();
+  montarPainel();
+}
+
+/* =====================================================================
+   ENCAMINHAMENTOS
+   ===================================================================== */
+async function montarEncaminhamentos(){
+  const tbody = document.getElementById('enc-tbody');
+
+  if(!sessaoReal){
+    const dados = [
+      {aluno:"Ana Beatriz Souza", de:"Professor(a)", para:"Psicóloga escolar", motivo:"Isolamento social", urg:"Atenção", status:"Em andamento"},
+      {aluno:"Lucas Martins", de:"Saúde", para:"Coordenação", motivo:"Ajuste de plano de emergência (asma)", urg:"Rotina", status:"Concluído"},
+      {aluno:"Gabriel Ferreira", de:"Coordenação", para:"Professor(a)", motivo:"Reforço em Matemática", urg:"Rotina", status:"Pendente"},
+    ];
+    const map = {"Em andamento":"pending","Concluído":"ok","Pendente":"info"};
+    tbody.innerHTML = dados.map(d=>`
+      <tr><td>${d.aluno}</td><td>${d.de}</td><td>${d.para}</td><td>${d.motivo}</td><td>${d.urg}</td>
+      <td><span class="chip ${map[d.status]}">${d.status}</span></td></tr>`).join('');
+    return;
+  }
+
+  const { data, error } = await supa
+    .from('encaminhamentos')
+    .select('*, alunos(nome), profiles(nome)')
+    .order('criado_em', { ascending:false });
+
+  const map = {"andamento":"pending","concluido":"ok","pendente":"info"};
+  tbody.innerHTML = (data && data.length) ? data.map(d=>`
+    <tr>
+      <td>${d.alunos ? d.alunos.nome : '—'}</td>
+      <td>${d.profiles ? d.profiles.nome : '—'}</td>
+      <td>${d.para_papel}</td>
+      <td>${d.motivo}</td>
+      <td>${d.urgencia}</td>
+      <td><span class="chip ${map[d.status] || 'info'}">${d.status}</span></td>
+    </tr>`).join('') : `<tr><td colspan="6" style="color:var(--ink-soft);text-align:center;padding:16px;">Nenhum encaminhamento registrado ainda.</td></tr>`;
 }
 
 function corPapel(papel){ return perfis[papel] ? perfis[papel].cor : '#999'; }
 
-function renderTimelineItem(e){
+function renderTimelineItemDemo(e){
   const escondido = e.sigiloso && sessao!==e.papel && sessao!=='coordenacao';
   return `<li>
     <div class="tico" style="background:${corPapel(e.papel)}">${perfis[e.papel].label[0]}</div>
@@ -796,15 +948,44 @@ function renderTimelineItem(e){
   </li>`;
 }
 
-/* ---------------- PERFIL DO ALUNO ---------------- */
-function abrirPerfil(id){
-  alunoAtual = alunos.find(a=>a.id===id);
-  document.getElementById('perfil-nome').textContent = alunoAtual.nome;
-  document.getElementById('perfil-tags').innerHTML = `
-    <span class="chip info">${alunoAtual.turma}</span>
-    <span class="chip ok">Frequência ${alunoAtual.freq}</span>
-    ${alunoAtual.alerta ? chipAlerta(alunoAtual.alerta) : ''}
-  `;
+// No modo real o próprio Supabase (RLS) já filtra o que cada um pode ver,
+// então tudo que chega aqui já passou pela regra de sigilo do banco.
+function renderTimelineItemReal(e){
+  const autorNome = e.profiles ? e.profiles.nome : 'Profissional';
+  const alunoNome = e.alunos ? e.alunos.nome : '';
+  const data = new Date(e.criado_em).toLocaleDateString('pt-BR');
+  return `<li>
+    <div class="tico" style="background:${corPapel(e.papel_autor)}">${(perfis[e.papel_autor]?.label || '?')[0]}</div>
+    <div class="body">
+      <div class="row1"><span class="author">${autorNome}${alunoNome ? ' · '+alunoNome : ''}</span><span class="date">${data}</span></div>
+      <div class="txt">${e.texto}${e.sigiloso ? ' <span style="color:var(--ink-soft);font-size:11px;">(sigiloso)</span>' : ''}</div>
+    </div>
+  </li>`;
+}
+
+/* =====================================================================
+   PERFIL DO ALUNO
+   ===================================================================== */
+async function abrirPerfil(id){
+  if(!sessaoReal){
+    alunoAtual = alunosDemo.find(a=>a.id===id);
+    document.getElementById('perfil-nome').textContent = alunoAtual.nome;
+    document.getElementById('perfil-tags').innerHTML = `
+      <span class="chip info">${alunoAtual.turma}</span>
+      <span class="chip ok">Frequência ${alunoAtual.freq}</span>
+      ${alunoAtual.alerta ? chipAlerta(alunoAtual.alerta) : ''}
+    `;
+  } else {
+    const { data, error } = await supa.from('alunos').select('*').eq('id', id).single();
+    if(error || !data){ alert('Não foi possível abrir este aluno.'); return; }
+    alunoAtual = data;
+    document.getElementById('perfil-nome').textContent = alunoAtual.nome;
+    document.getElementById('perfil-tags').innerHTML = `
+      <span class="chip info">${alunoAtual.turma}</span>
+      <span class="chip ok">Frequência ${alunoAtual.frequencia !== null ? alunoAtual.frequencia+'%' : '—'}</span>
+      ${chipFrequencia(alunoAtual.frequencia)}
+    `;
+  }
 
   const abas = [
     {id:"visaogeral", label:"Visão Geral"},
@@ -814,15 +995,14 @@ function abrirPerfil(id){
     {id:"timeline", label:"Linha do Tempo"},
   ];
   document.getElementById('perfil-tabs').innerHTML = abas.map((ab,i)=>{
-    const podeVer = visibilidade[ab.id].includes(sessao);
-    return `<button class="tab-btn ${i===0?'active':''}" ${podeVer?'':''} onclick="mostrarAba('${ab.id}', this)">${ab.label}</button>`;
+    return `<button class="tab-btn ${i===0?'active':''}" onclick="mostrarAba('${ab.id}', this)">${ab.label}</button>`;
   }).join('');
 
   mostrarAba('visaogeral', document.querySelector('.tab-btn'));
   mudarView('perfil');
 }
 
-function mostrarAba(id, btn){
+async function mostrarAba(id, btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
 
@@ -834,21 +1014,109 @@ function mostrarAba(id, btn){
     return;
   }
 
-  let html = '';
-  if(id==='visaogeral'){
-    html = `<div class="panel"><h3>Resumo</h3><p>${alunoAtual.nome}, ${alunoAtual.turma}. Frequência atual de ${alunoAtual.freq}.</p>
-    ${alunoAtual.alerta ? `<p><b>Alerta ativo:</b> ${alunoAtual.alerta.texto} — detalhes completos disponíveis para o profissional responsável.</p>` : '<p>Nenhum alerta ativo no momento.</p>'}
-    </div>`;
-  } else if(id==='pedagogico'){
-    html = `<div class="panel"><h3>Registro pedagógico</h3><p>${alunoAtual.pedagogico || 'Sem registros.'}</p></div>`;
-  } else if(id==='psicossocial'){
-    html = `<div class="panel"><h3>Registro psicossocial</h3><p>${alunoAtual.psicossocial || 'Sem registros.'}</p></div>`;
-  } else if(id==='saude'){
-    html = `<div class="panel"><h3>Registro de saúde</h3><p>${alunoAtual.saude || 'Sem registros.'}</p></div>`;
-  } else if(id==='timeline'){
-    html = `<div class="panel"><h3>Linha do tempo compartilhada</h3><ul class="timeline">${alunoAtual.timeline.map(renderTimelineItem).join('')}</ul></div>`;
+  if(!sessaoReal){
+    // ---- modo demonstração: continua mostrando os textos de exemplo ----
+    let html = '';
+    if(id==='visaogeral'){
+      html = `<div class="panel"><h3>Resumo</h3><p>${alunoAtual.nome}, ${alunoAtual.turma}. Frequência atual de ${alunoAtual.freq}.</p>
+      ${alunoAtual.alerta ? `<p><b>Alerta ativo:</b> ${alunoAtual.alerta.texto} — detalhes completos disponíveis para o profissional responsável.</p>` : '<p>Nenhum alerta ativo no momento.</p>'}
+      </div>`;
+    } else if(id==='pedagogico'){
+      html = `<div class="panel"><h3>Registro pedagógico</h3><p>${alunoAtual.pedagogico || 'Sem registros.'}</p></div>`;
+    } else if(id==='psicossocial'){
+      html = `<div class="panel"><h3>Registro psicossocial</h3><p>${alunoAtual.psicossocial || 'Sem registros.'}</p></div>`;
+    } else if(id==='saude'){
+      html = `<div class="panel"><h3>Registro de saúde</h3><p>${alunoAtual.saude || 'Sem registros.'}</p></div>`;
+    } else if(id==='timeline'){
+      html = `<div class="panel"><h3>Linha do tempo compartilhada</h3><ul class="timeline">${alunoAtual.timeline.map(renderTimelineItemDemo).join('')}</ul></div>`;
+    }
+    el.innerHTML = html;
+    return;
   }
-  el.innerHTML = html;
+
+  // ---- modo real: busca e permite adicionar registros de verdade ----
+  if(id==='visaogeral'){
+    el.innerHTML = `<div class="panel"><h3>Resumo</h3>
+      <p>${alunoAtual.nome}, ${alunoAtual.turma}. Frequência atual: ${alunoAtual.frequencia !== null ? alunoAtual.frequencia+'%' : 'não informada'}.</p>
+      ${alunoAtual.responsavel_email ? `<p>Responsável: ${alunoAtual.responsavel_email}</p>` : ''}
+    </div>`;
+    return;
+  }
+
+  if(id==='timeline'){
+    const { data } = await supa.from('linha_tempo')
+      .select('*, profiles(nome)')
+      .eq('aluno_id', alunoAtual.id)
+      .order('criado_em', { ascending:false });
+
+    el.innerHTML = `
+      <div class="panel">
+        <h3>Registrar novo evento</h3>
+        <label>O que aconteceu?</label>
+        <input type="text" id="novo-timeline-texto" placeholder="Descreva o evento...">
+        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <input type="checkbox" id="novo-timeline-sigiloso" style="width:auto;">
+          Marcar como sigiloso (só você e a coordenação verão)
+        </label>
+        <button class="primary-btn" onclick="adicionarTimeline()">Adicionar à linha do tempo</button>
+      </div>
+      <div class="panel">
+        <h3>Linha do tempo compartilhada</h3>
+        <ul class="timeline">${(data && data.length) ? data.map(renderTimelineItemReal).join('') : '<li style="color:var(--ink-soft);">Nenhum registro ainda.</li>'}</ul>
+      </div>`;
+    return;
+  }
+
+  // pedagogico / psicossocial / saude
+  const tabela = tabelaPorAba[id];
+  const { data } = await supa.from(tabela)
+    .select('*, profiles(nome)')
+    .eq('aluno_id', alunoAtual.id)
+    .order('criado_em', { ascending:false });
+
+  const podeEscrever = ['professor','psicologa','saude'].includes(sessao) ? visibilidade[id].includes(sessao) : sessao==='coordenacao';
+
+  el.innerHTML = `
+    ${podeEscrever ? `
+    <div class="panel">
+      <h3>Adicionar registro</h3>
+      <label>Conteúdo</label>
+      <input type="text" id="novo-registro-texto" placeholder="Escreva a observação...">
+      <button class="primary-btn" onclick="adicionarRegistro('${tabela}')">Salvar registro</button>
+    </div>` : ''}
+    <div class="panel">
+      <h3>Histórico</h3>
+      ${(data && data.length) ? data.map(r => `
+        <div style="padding:10px 0;border-bottom:1px solid #EFEDE4;">
+          <div style="font-size:12.5px;color:var(--ink-soft);">${r.profiles ? r.profiles.nome : 'Profissional'} · ${new Date(r.criado_em).toLocaleDateString('pt-BR')}</div>
+          <div style="font-size:13.5px;margin-top:3px;">${r.conteudo}</div>
+        </div>`).join('') : '<p style="color:var(--ink-soft);font-size:13.5px;">Nenhum registro ainda.</p>'}
+    </div>`;
+}
+
+async function adicionarTimeline(){
+  const texto = document.getElementById('novo-timeline-texto').value.trim();
+  const sigiloso = document.getElementById('novo-timeline-sigiloso').checked;
+  if(!texto) return;
+
+  const { error } = await supa.from('linha_tempo').insert({
+    aluno_id: alunoAtual.id, autor_id: usuarioId, papel_autor: sessao, texto, sigiloso
+  });
+  if(error){ alert('Não foi possível salvar: ' + error.message); return; }
+  mostrarAba('timeline', document.querySelector('.tab-btn.active'));
+  montarPainel();
+}
+
+async function adicionarRegistro(tabela){
+  const texto = document.getElementById('novo-registro-texto').value.trim();
+  if(!texto) return;
+
+  const { error } = await supa.from(tabela).insert({
+    aluno_id: alunoAtual.id, autor_id: usuarioId, conteudo: texto
+  });
+  if(error){ alert('Não foi possível salvar: ' + error.message); return; }
+  const abaAtiva = Object.keys(tabelaPorAba).find(k => tabelaPorAba[k] === tabela);
+  mostrarAba(abaAtiva, document.querySelector('.tab-btn.active'));
 }
 
 /* ---------------- MODAL ENCAMINHAMENTO ---------------- */
@@ -859,17 +1127,40 @@ function abrirModalEncaminhar(){
 function fecharModal(){
   document.getElementById('modal-encaminhar').classList.remove('active');
 }
-function confirmarEncaminhamento(){
-  fecharModal();
-  mudarView('encaminhamentos');
-  const tbody = document.getElementById('enc-tbody');
+async function confirmarEncaminhamento(){
   const para = document.getElementById('enc-para').value;
-  const urg = document.getElementById('enc-urgencia').value;
-  const desc = document.getElementById('enc-desc').value || '(sem descrição)';
-  const linha = document.createElement('tr');
-  linha.innerHTML = `<td>${alunoAtual.nome}</td><td>${perfis[sessao].label}</td><td>${para}</td><td>${desc}</td><td>${urg}</td><td><span class="chip pending">Pendente</span></td>`;
-  tbody.prepend(linha);
+  const urgTexto = document.getElementById('enc-urgencia').value;
+  const desc = document.getElementById('enc-desc').value.trim() || '(sem descrição)';
+
+  const mapaUrgencia = {"Rotina":"rotina","Atenção":"atencao","Urgente":"urgente"};
+  const mapaPapel = {"Psicóloga escolar":"psicologa","Profissional de saúde":"saude","Coordenação":"coordenacao","Professor(a) titular":"professor"};
+
+  fecharModal();
+
+  if(!sessaoReal){
+    mudarView('encaminhamentos');
+    const tbody = document.getElementById('enc-tbody');
+    const linha = document.createElement('tr');
+    linha.innerHTML = `<td>${alunoAtual.nome}</td><td>${perfis[sessao].label}</td><td>${para}</td><td>${desc}</td><td>${urgTexto}</td><td><span class="chip pending">Pendente</span></td>`;
+    tbody.prepend(linha);
+    return;
+  }
+
+  const { error } = await supa.from('encaminhamentos').insert({
+    aluno_id: alunoAtual.id,
+    de_perfil_id: usuarioId,
+    para_papel: mapaPapel[para] || 'coordenacao',
+    motivo: desc,
+    urgencia: mapaUrgencia[urgTexto] || 'rotina',
+    status: 'pendente'
+  });
+  if(error){ alert('Não foi possível enviar o encaminhamento: ' + error.message); return; }
+
+  mudarView('encaminhamentos');
+  montarEncaminhamentos();
+  montarPainel();
 }
+
 </script>
 </body>
 </html>
