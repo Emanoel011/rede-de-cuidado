@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redefinir senha — Elo Escolar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFEFE8; --paper:#FFFFFF; --ink:#172420; --ink-soft:#4E5D57;
+    --teal:#1F4B43; --teal-light:#3C6F63; --teal-pale:#DCE7E3;
+    --line:#DAD6C9; --danger:#A8412A; --danger-pale:#F1DCD4;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);font-family:'IBM Plex Sans',sans-serif;color:var(--ink);}
+  .card{background:var(--paper);border-radius:12px;padding:34px 32px;width:100%;max-width:380px;
+    border:1px solid var(--line);}
+  h1{font-family:'Fraunces',serif;font-size:22px;margin:0 0 8px;}
+  p{color:var(--ink-soft);font-size:13.5px;line-height:1.55;margin:0 0 20px;}
+  label{display:block;font-size:13px;color:var(--ink-soft);margin:14px 0 6px;font-weight:500;}
+  input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:8px;font-size:14.5px;
+    background:#FBFAF6;color:var(--ink);font-family:inherit;}
+  button{margin-top:20px;width:100%;background:var(--teal);color:#fff;border:none;border-radius:8px;
+    padding:12px;font-size:15px;font-weight:600;cursor:pointer;}
+  button:hover{background:var(--teal-light);}
+  .msg-erro{background:var(--danger-pale);color:var(--danger);font-size:13px;padding:10px 12px;border-radius:7px;margin-bottom:6px;display:none;}
+  .msg-ok{background:var(--teal-pale);color:var(--teal);font-size:13px;padding:10px 12px;border-radius:7px;margin-bottom:6px;display:none;}
+  a{color:var(--teal);font-size:13px;font-weight:600;}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Definir nova senha</h1>
+    <p>Você chegou aqui por um link de recuperação enviado por e-mail. Escolha uma nova senha para sua conta do Elo Escolar.</p>
+
+    <div class="msg-erro" id="erro"></div>
+    <div class="msg-ok" id="ok"></div>
+
+    <label for="nova-senha">Nova senha</label>
+    <input type="password" id="nova-senha" placeholder="Mínimo 8 caracteres">
+
+    <label for="confirma-senha">Confirme a nova senha</label>
+    <input type="password" id="confirma-senha" placeholder="Repita a senha">
+
+    <button onclick="redefinir()">Salvar nova senha</button>
+    <p style="margin-top:18px;"><a href="./elo-escolar.html">Voltar para o login</a></p>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  // Use exatamente os mesmos valores configurados em elo-escolar.html
+  const SUPABASE_URL = "COLE_AQUI_A_URL_DO_SEU_PROJETO";
+  const SUPABASE_ANON_KEY = "COLE_AQUI_A_ANON_KEY";
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function mostrar(id, texto){
+    const el = document.getElementById(id);
+    el.textContent = texto;
+    el.style.display = 'block';
+  }
+
+  async function redefinir(){
+    document.getElementById('erro').style.display='none';
+    document.getElementById('ok').style.display='none';
+
+    const s1 = document.getElementById('nova-senha').value;
+    const s2 = document.getElementById('confirma-senha').value;
+
+    if(s1.length < 8) return mostrar('erro','A senha precisa ter pelo menos 8 caracteres.');
+    if(s1 !== s2) return mostrar('erro','As senhas não coincidem.');
+
+    // O Supabase já autentica automaticamente a sessão de recuperação
+    // usando o token que veio na URL do e-mail.
+    const { error } = await supa.auth.updateUser({ password: s1 });
+    if(error) return mostrar('erro','Não foi possível redefinir: ' + error.message);
+
+    mostrar('ok','Senha redefinida com sucesso! Você já pode voltar para o login.');
+  }
+</script>
+</body>
+</html>
