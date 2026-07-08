@@ -1,147 +1,870 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rede de Cuidado</title>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: 'Public Sans', sans-serif; }
-        .font-fraunces { font-family: 'Fraunces', serif; }
-        .table-row:hover { background-color: #1F2522; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elo Escolar — Rede de Cuidado Integrado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #EFEFE8;
+    --paper: #FFFFFF;
+    --ink: #172420;
+    --ink-soft: #4E5D57;
+    --teal: #1F4B43;
+    --teal-light: #3C6F63;
+    --teal-pale: #DCE7E3;
+    --amber: #C97C33;
+    --amber-pale: #F3DDBC;
+    --line: #DAD6C9;
+    --danger: #A8412A;
+    --danger-pale: #F1DCD4;
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
+  h1,h2,h3,.display{font-family:'Fraunces',serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  a{color:inherit;}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height:100vh;display:flex;
+  }
+  .login-art{
+    flex:1.1;background:var(--teal);color:#F4F2EA;padding:56px;
+    display:flex;flex-direction:column;justify-content:space-between;
+    position:relative;overflow:hidden;
+  }
+  .login-art .brand{font-size:15px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;}
+  .login-art h1{font-size:44px;line-height:1.08;font-weight:600;max-width:520px;margin:24px 0 14px;}
+  .login-art p{max-width:440px;color:#CFE0DA;font-size:15.5px;line-height:1.6;}
+  .thread-svg{position:absolute;right:-40px;bottom:-30px;opacity:.9;}
+  .roles-legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:36px;}
+  .roles-legend div{display:flex;align-items:center;gap:8px;font-size:13px;color:#D7E5E0;}
+  .roles-legend .dot{width:9px;height:9px;border-radius:50%;}
+
+  .login-form-wrap{
+    flex:1;display:flex;align-items:center;justify-content:center;padding:40px;background:var(--paper);
+  }
+  .login-form{width:100%;max-width:380px;}
+  .login-form .eyebrow{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:6px;}
+  .login-form h2{font-size:26px;margin:0 0 26px;font-weight:600;}
+  label{display:block;font-size:13px;color:var(--ink-soft);margin:16px 0 6px;font-weight:500;}
+  input[type=text],input[type=password],select{
+    width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:8px;
+    font-size:14.5px;background:#FBFAF6;color:var(--ink);font-family:inherit;
+  }
+  input:focus,select:focus{outline:2px solid var(--teal-light);outline-offset:1px;}
+  .primary-btn{
+    margin-top:24px;width:100%;background:var(--teal);color:#fff;border:none;border-radius:8px;
+    padding:12px;font-size:15px;font-weight:600;letter-spacing:.01em;
+  }
+  .primary-btn:hover{background:var(--teal-light);}
+  .divider{display:flex;align-items:center;gap:10px;margin:26px 0 18px;color:#9AA39D;font-size:12px;}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
+  .link-btn{background:none;border:none;color:var(--teal);font-size:13px;font-weight:600;margin-top:12px;width:100%;text-align:center;padding:4px;}
+  .tela-desc{color:var(--ink-soft);font-size:13px;line-height:1.55;margin:-10px 0 6px;}
+  .msg-erro{background:var(--danger-pale);color:var(--danger);font-size:13px;padding:10px 12px;border-radius:7px;margin-bottom:6px;}
+  .msg-ok{background:var(--teal-pale);color:var(--teal);font-size:13px;padding:10px 12px;border-radius:7px;margin-bottom:6px;}
+  .config-note{font-size:11.5px;color:#B4A98E;background:#FBF6E9;border:1px dashed #E4D9B4;border-radius:7px;padding:8px 10px;margin-top:16px;}
+  .btn-outline.full{display:block;width:100%;text-align:center;}
+  .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .demo-card{
+    border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#FBFAF6;text-align:left;
+  }
+  .demo-card:hover{border-color:var(--teal-light);}
+  .demo-card .role-name{font-weight:600;font-size:13.5px;}
+  .demo-card .role-desc{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+
+  /* ---------- APP SHELL ---------- */
+  #app-screen{display:none;min-height:100vh;grid-template-columns:230px 1fr;}
+  #app-screen.active{display:grid;}
+  .sidebar{background:var(--teal);color:#EAF1EE;padding:22px 16px;display:flex;flex-direction:column;}
+  .sidebar .brand{font-family:'Fraunces',serif;font-size:20px;font-weight:600;padding:0 8px 20px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:14px;
+    color:#D7E5E0;margin-bottom:2px;background:transparent;border:none;width:100%;text-align:left;
+  }
+  .nav-item:hover{background:rgba(255,255,255,.08);}
+  .nav-item.active{background:rgba(255,255,255,.14);color:#fff;font-weight:600;}
+  .nav-item .ico{width:18px;text-align:center;}
+  .sidebar-foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.15);padding-top:14px;font-size:12.5px;color:#B9CCC5;}
+
+  .main{padding:26px 34px;overflow-y:auto;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+  .topbar h1{font-size:22px;margin:0;font-weight:600;}
+  .topbar .sub{color:var(--ink-soft);font-size:13.5px;margin-top:3px;}
+  .who{display:flex;align-items:center;gap:10px;}
+  .who .avatar{width:34px;height:34px;border-radius:50%;background:var(--amber-pale);color:var(--amber);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .who .meta{font-size:12.5px;line-height:1.3;}
+  .who .meta b{display:block;font-size:13.5px;}
+  .logout-btn{background:none;border:1px solid var(--line);border-radius:7px;padding:6px 11px;font-size:12.5px;color:var(--ink-soft);}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .welcome-banner{
+    background:linear-gradient(120deg,var(--teal) 0%, var(--teal-light) 100%);
+    color:#F4F2EA;border-radius:var(--radius);padding:24px 28px;margin-bottom:20px;
+    display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+  }
+  .welcome-banner .greet-eyebrow{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#CFE0DA;margin-bottom:6px;}
+  .welcome-banner h2{margin:0;font-size:23px;font-weight:600;}
+  .welcome-banner .greet-sub{margin-top:6px;font-size:13.5px;color:#D7E5E0;max-width:520px;}
+  .welcome-banner .greet-date{text-align:right;font-size:13px;color:#D7E5E0;}
+  .welcome-banner .greet-date b{display:block;color:#fff;font-size:15px;font-family:'Fraunces',serif;}
+
+  .two-col{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start;}
+  @media(max-width:980px){.two-col{grid-template-columns:1fr;}}
+
+  .agenda-list{list-style:none;margin:0;padding:0;}
+  .agenda-list li{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #EFEDE4;font-size:13px;}
+  .agenda-list li:last-child{border-bottom:none;}
+  .agenda-list .time{font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);flex:none;width:48px;}
+  .agenda-list .what b{display:block;font-size:13.5px;color:var(--ink);}
+  .agenda-list .what span{color:var(--ink-soft);font-size:12px;}
+
+  .destaque-card{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #EFEDE4;}
+  .destaque-card:last-child{border-bottom:none;}
+  .destaque-card .dname{font-size:13.5px;font-weight:600;}
+  .destaque-card .dsub{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+
+  .atalhos-panel .full{display:block;width:100%;margin-bottom:8px;text-align:center;}
+  .atalhos-panel .full:last-child{margin-bottom:0;}
+
+  .cards-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .stat-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .stat-card .num{font-family:'Fraunces',serif;font-size:28px;font-weight:600;}
+  .stat-card .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .stat-card.warn .num{color:var(--danger);}
+
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:18px;}
+  .panel h3{margin:0 0 14px;font-size:15.5px;font-weight:600;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--line);}
+  td{padding:10px;border-bottom:1px solid #EFEDE4;vertical-align:middle;}
+  tr.clickable:hover{background:#FAF9F3;cursor:pointer;}
+  .chip{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;}
+  .chip.ok{background:var(--teal-pale);color:var(--teal);}
+  .chip.alert{background:var(--danger-pale);color:var(--danger);}
+  .chip.pending{background:var(--amber-pale);color:var(--amber);}
+  .chip.info{background:#E3E7F5;color:#42508C;}
+
+  .back-link{font-size:13px;color:var(--teal);font-weight:600;margin-bottom:10px;display:inline-block;background:none;border:none;padding:0;}
+
+  .student-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+  .student-head .name{font-size:22px;font-weight:600;}
+  .student-head .tags{margin-top:6px;display:flex;gap:8px;}
+
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap;}
+  .tab-btn{background:none;border:none;padding:10px 15px;font-size:13.5px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;}
+  .tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+  .tab-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  .locked-box{
+    border:1px dashed var(--line);border-radius:8px;padding:22px;text-align:center;color:var(--ink-soft);font-size:13.5px;background:#FAF9F3;
+  }
+  .locked-box b{display:block;color:var(--ink);font-size:14px;margin-bottom:4px;}
+
+  .timeline{list-style:none;padding:0;margin:0;}
+  .timeline li{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid #EFEDE4;}
+  .timeline .tico{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+  .timeline .body{flex:1;}
+  .timeline .row1{display:flex;justify-content:space-between;font-size:13px;}
+  .timeline .author{font-weight:600;}
+  .timeline .date{color:var(--ink-soft);font-size:12px;}
+  .timeline .txt{margin-top:4px;font-size:13.5px;color:var(--ink);}
+  .timeline .txt.sigiloso{color:var(--ink-soft);font-style:italic;}
+
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(23,36,32,.45);align-items:center;justify-content:center;z-index:50;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal{background:var(--paper);border-radius:12px;padding:26px 28px;width:440px;max-width:92vw;}
+  .modal h3{margin:0 0 18px;}
+  .modal .primary-btn{margin-top:18px;}
+  .cancel-link{background:none;border:none;color:var(--ink-soft);font-size:13px;margin-top:10px;width:100%;text-align:center;}
+
+  .btn-outline{background:none;border:1px solid var(--teal);color:var(--teal);padding:8px 14px;border-radius:7px;font-size:13px;font-weight:600;}
+  .btn-outline:hover{background:var(--teal-pale);}
+  .btn-fill{background:var(--amber);border:none;color:#fff;padding:8px 14px;border-radius:7px;font-size:13px;font-weight:600;}
+
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-thumb{background:#C9C4B4;border-radius:6px;}
+</style>
 </head>
-<body class="bg-[#F8FAF9]">
+<body>
 
-    <!-- TELAS DE AUTENTICAÇÃO -->
-    <div id="authScreen" class="min-h-screen flex items-center justify-center p-6">
-        <div class="w-full max-w-[1100px] bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+<!-- ================= LOGIN ================= -->
+<div id="login-screen">
+  <div class="login-art">
+    <div>
+      <div class="brand">Elo Escolar</div>
+      <h1>Um só fio, tecido por quem cuida do aluno.</h1>
+      <p>Professores, psicologia escolar, saúde e coordenação enxergam o mesmo aluno sob ângulos diferentes — e sincronizados. Cada um vê exatamente o que precisa, no momento certo.</p>
+    </div>
+    <div class="roles-legend">
+      <div><span class="dot" style="background:#E8B472"></span> Professor(a)</div>
+      <div><span class="dot" style="background:#8FB5AB"></span> Psicóloga escolar</div>
+      <div><span class="dot" style="background:#E29A82"></span> Saúde</div>
+      <div><span class="dot" style="background:#B7C6E8"></span> Coordenação</div>
+    </div>
+    <svg class="thread-svg" width="360" height="260" viewBox="0 0 360 260" fill="none">
+      <path d="M0 60 C 90 10, 140 120, 220 90 S 330 30, 360 70" stroke="#4C7A6F" stroke-width="2" fill="none" opacity="0.6"/>
+      <path d="M0 160 C 100 200, 160 110, 240 160 S 320 220, 360 190" stroke="#B58A54" stroke-width="2" fill="none" opacity="0.5"/>
+      <circle cx="90" cy="34" r="5" fill="#E8B472"/>
+      <circle cx="220" cy="90" r="5" fill="#8FB5AB"/>
+      <circle cx="160" cy="130" r="5" fill="#E29A82"/>
+      <circle cx="300" cy="200" r="5" fill="#B7C6E8"/>
+    </svg>
+  </div>
 
-            <!-- Lado Verde -->
-            <div class="bg-[#1A5444] text-white p-12 flex flex-col justify-center relative hidden md:flex">
-                <div class="absolute -right-12 -bottom-12 w-64 h-64 border border-white/10 rounded-full"></div>
-                <div class="relative z-10">
-                    <div class="flex items-center gap-3 mb-8">
-                        <i class='bx bx-hive text-4xl'></i>
-                        <span class="text-2xl font-semibold tracking-wider">REDE DE CUIDADO</span>
-                    </div>
-                    <h1 class="text-5xl font-fraunces leading-tight">Um só histórico,<br>toda a equipe.</h1>
-                    <p class="mt-6 text-lg text-white/80">Prontuário eletrônico escolar integrado.</p>
-                </div>
-            </div>
+  <div class="login-form-wrap">
+    <div class="login-form">
 
-            <!-- Formulários -->
-            <div class="p-12 md:p-16 flex flex-col justify-center">
-                <div id="sysMsg" class="hidden mb-6 p-4 rounded-2xl text-sm"></div>
+      <!-- ===== TELA: LOGIN ===== -->
+      <div id="tela-login" class="auth-tela">
+        <div class="eyebrow">Acesso ao sistema</div>
+        <h2>Entrar no Elo Escolar</h2>
 
-                <!-- LOGIN -->
-                <form id="loginForm" onsubmit="doLogin(event)" class="space-y-6">
-                    <h2 class="text-3xl font-fraunces">Entrar</h2>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">E-mail Institucional</label>
-                        <input id="loginEmail" type="email" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64] focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                        <input id="loginPass" type="password" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64] focus:outline-none">
-                    </div>
-                    <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Entrar</button>
-                    <div class="flex justify-between text-sm">
-                        <a onclick="switchView('register')" class="text-[#2A7A64] hover:underline cursor-pointer">Cadastre-se</a>
-                        <a onclick="switchView('recover')" class="text-[#2A7A64] hover:underline cursor-pointer">Esqueci a senha</a>
-                    </div>
-                </form>
+        <div id="login-erro" class="msg-erro" style="display:none;"></div>
 
-                <!-- CADASTRO -->
-                <form id="regForm" onsubmit="doRegister(event)" class="space-y-6 hidden">
-                    <h2 class="text-3xl font-fraunces">Criar Conta</h2>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
-                        <input id="regName" type="text" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
-                            <input id="regEmail" type="email" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                            <input id="regPass" type="password" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Criar Conta</button>
-                    <a onclick="switchView('login')" class="block text-center text-[#2A7A64] hover:underline cursor-pointer">Já tenho conta → Voltar</a>
-                </form>
+        <label for="login-email">E-mail institucional</label>
+        <input type="text" id="login-email" placeholder="nome@escola.edu.br">
 
-                <!-- RECUPERAR SENHA -->
-                <form id="recoverForm" onsubmit="doRecover(event)" class="space-y-6 hidden">
-                    <h2 class="text-3xl font-fraunces">Recuperar Senha</h2>
-                    <p class="text-gray-600">Digite seu e-mail para receber o link.</p>
-                    <input id="recoverEmail" type="email" placeholder="seu@email.com" required class="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:border-[#2A7A64]">
-                    <button type="submit" class="w-full bg-[#1A5444] text-white py-4 rounded-2xl font-semibold">Enviar Link de Recuperação</button>
-                    <a onclick="switchView('login')" class="block text-center text-[#2A7A64] hover:underline cursor-pointer">Voltar ao Login</a>
-                </form>
-            </div>
+        <label for="login-senha">Senha</label>
+        <input type="password" id="login-senha" placeholder="••••••••">
+
+        <button class="primary-btn" onclick="fazerLogin()">Entrar</button>
+        <button class="link-btn" onclick="irPara('recuperar')">Esqueci minha senha</button>
+
+        <div class="divider">ainda não tem conta?</div>
+        <button class="btn-outline full" onclick="irPara('cadastro')">Criar conta institucional</button>
+
+        <div class="config-note" id="config-note"></div>
+
+        <div class="divider">ou explore o protótipo (offline, sem login real)</div>
+        <div class="demo-grid">
+          <button class="demo-card" onclick="entrarDemo('professor')">
+            <div class="role-name">Professor(a)</div>
+            <div class="role-desc">Turma, frequência, alertas</div>
+          </button>
+          <button class="demo-card" onclick="entrarDemo('psicologa')">
+            <div class="role-name">Psicóloga escolar</div>
+            <div class="role-desc">Acompanhamento psicossocial</div>
+          </button>
+          <button class="demo-card" onclick="entrarDemo('saude')">
+            <div class="role-name">Saúde</div>
+            <div class="role-desc">Condições de saúde, encaminhamentos</div>
+          </button>
+          <button class="demo-card" onclick="entrarDemo('coordenacao')">
+            <div class="role-name">Coordenação</div>
+            <div class="role-desc">Visão geral e auditoria</div>
+          </button>
         </div>
+      </div>
+
+      <!-- ===== TELA: CADASTRO ===== -->
+      <div id="tela-cadastro" class="auth-tela" style="display:none;">
+        <div class="eyebrow">Solicitar acesso</div>
+        <h2>Criar conta institucional</h2>
+        <p class="tela-desc">Sua conta é criada como <b>pendente</b>. Um(a) coordenador(a) precisa aprovar e confirmar seu papel antes que você veja qualquer dado de aluno.</p>
+
+        <div id="cadastro-erro" class="msg-erro" style="display:none;"></div>
+        <div id="cadastro-ok" class="msg-ok" style="display:none;"></div>
+
+        <label for="cad-nome">Nome completo</label>
+        <input type="text" id="cad-nome" placeholder="Seu nome">
+
+        <label for="cad-email">E-mail institucional</label>
+        <input type="text" id="cad-email" placeholder="nome@escola.edu.br">
+
+        <label for="cad-senha">Crie uma senha</label>
+        <input type="password" id="cad-senha" placeholder="Mínimo 8 caracteres">
+
+        <label for="cad-papel">Papel solicitado</label>
+        <select id="cad-papel">
+          <option value="professor">Professor(a)</option>
+          <option value="psicologa">Psicóloga escolar</option>
+          <option value="saude">Profissional de saúde</option>
+          <option value="coordenacao">Coordenação / Gestão</option>
+        </select>
+
+        <button class="primary-btn" onclick="fazerCadastro()">Solicitar acesso</button>
+        <button class="link-btn" onclick="irPara('login')">Voltar para o login</button>
+      </div>
+
+      <!-- ===== TELA: RECUPERAR SENHA ===== -->
+      <div id="tela-recuperar" class="auth-tela" style="display:none;">
+        <div class="eyebrow">Recuperação de acesso</div>
+        <h2>Esqueci minha senha</h2>
+        <p class="tela-desc">Vamos enviar um link de redefinição para o seu e-mail institucional. O link expira em pouco tempo, por segurança.</p>
+
+        <div id="recuperar-erro" class="msg-erro" style="display:none;"></div>
+        <div id="recuperar-ok" class="msg-ok" style="display:none;"></div>
+
+        <label for="rec-email">E-mail institucional</label>
+        <input type="text" id="rec-email" placeholder="nome@escola.edu.br">
+
+        <button class="primary-btn" onclick="enviarRecuperacao()">Enviar link de redefinição</button>
+        <button class="link-btn" onclick="irPara('login')">Voltar para o login</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app-screen">
+  <div class="sidebar">
+    <div class="brand">Elo Escolar</div>
+    <button class="nav-item active" data-view="painel"><span class="ico">◆</span> Painel</button>
+    <button class="nav-item" data-view="alunos"><span class="ico">▤</span> Alunos</button>
+    <button class="nav-item" data-view="encaminhamentos"><span class="ico">⇄</span> Encaminhamentos</button>
+    <button class="nav-item" data-view="mensagens"><span class="ico">✉</span> Mensagens</button>
+    <button class="nav-item" data-view="relatorios"><span class="ico">▦</span> Relatórios</button>
+    <button class="nav-item" data-view="auditoria" id="nav-auditoria"><span class="ico">◎</span> Auditoria</button>
+    <div class="sidebar-foot">
+      Dados sensíveis protegidos conforme LGPD. Acesso registrado e segmentado por perfil.
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="view-title">Painel</h1>
+        <div class="sub" id="view-sub">Visão geral de hoje</div>
+      </div>
+      <div class="who">
+        <div class="avatar" id="who-initials">P</div>
+        <div class="meta"><b id="who-name">—</b><span id="who-role">—</span></div>
+        <button class="logout-btn" onclick="sair()">Sair</button>
+      </div>
     </div>
 
-    <!-- TELA DO SISTEMA -->
-    <div id="appScreen" class="hidden h-screen grid grid-cols-[280px_1fr] bg-[#0F1211] text-gray-200">
-        <!-- Sidebar -->
-        <div class="bg-[#1A1F1D] border-r border-[#2A3A35] p-6 flex flex-col">
-            <div class="flex items-center gap-3 mb-10">
-                <div class="w-9 h-9 bg-[#2A7A64] rounded-xl flex items-center justify-center font-bold">R</div>
-                <div class="font-fraunces text-xl">Rede de Cuidado</div>
-            </div>
-            <nav class="space-y-1">
-                <a onclick="showDashboard()" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-[#2A3A35]"><i class='bx bx-home'></i> Painel Inicial</a>
-                <a onclick="loadTable()" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-[#2A3A35]"><i class='bx bx-table'></i> Registros</a>
-            </nav>
-            <div class="mt-auto pt-6 border-t border-[#2A3A35]">
-                <div id="userName" class="font-semibold"></div>
-                <button onclick="doLogout()" class="mt-4 text-red-400 hover:text-red-500 text-sm flex items-center gap-2">
-                    <i class='bx bx-log-out'></i> Sair
-                </button>
-            </div>
+    <!-- PAINEL -->
+    <div class="view active" id="view-painel">
+      <div class="welcome-banner" id="welcome-banner"></div>
+
+      <div class="cards-row" id="painel-cards"></div>
+
+      <div class="two-col">
+        <div>
+          <div class="panel">
+            <h3>Pendências para você</h3>
+            <table><thead><tr><th>Aluno</th><th>Tipo</th><th>Assunto</th><th>Status</th></tr></thead>
+            <tbody id="painel-pendencias"></tbody></table>
+          </div>
+          <div class="panel">
+            <h3>Últimas atualizações da rede</h3>
+            <ul class="timeline" id="painel-timeline"></ul>
+          </div>
         </div>
 
-        <div class="overflow-auto">
-            <!-- Painel Inicial -->
-            <div id="dashboardScreen" class="p-10">
-                <h1 class="text-4xl font-fraunces text-white mb-8">Painel Inicial</h1>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-[#1A1F1D] p-6 rounded-3xl">
-                        <div class="text-emerald-400 text-4xl mb-2">342</div>
-                        <div class="text-gray-400">Alunos na Base</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Table Editor -->
-            <div id="tableScreen" class="hidden p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-2xl font-semibold">public.registros</h1>
-                    <button onclick="insertNewRow()" class="bg-[#2A7A64] px-6 py-3 rounded-2xl flex items-center gap-2">
-                        <i class='bx bx-plus'></i> Novo Registro
-                    </button>
-                </div>
-                <table class="w-full">
-                    <thead class="bg-[#1F2522]">
-                        <tr>
-                            <th class="text-left p-4">Chave</th>
-                            <th class="text-left p-4">Valor (JSON)</th>
-                            <th class="w-28 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="text-sm"></tbody>
-                </table>
-            </div>
+        <div>
+          <div class="panel">
+            <h3>Sua agenda de hoje</h3>
+            <ul class="agenda-list" id="painel-agenda"></ul>
+          </div>
+          <div class="panel">
+            <h3>Alunos em destaque</h3>
+            <div id="painel-destaques"></div>
+          </div>
+          <div class="panel atalhos-panel">
+            <h3>Atalhos</h3>
+            <button class="btn-outline full" onclick="mudarView('alunos')">Ver todos os alunos</button>
+            <button class="btn-outline full" onclick="mudarView('encaminhamentos')">Abrir encaminhamentos</button>
+            <button class="btn-outline full" onclick="mudarView('mensagens')">Ir para mensagens</button>
+          </div>
         </div>
+      </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- ALUNOS -->
+    <div class="view" id="view-alunos">
+      <div class="panel">
+        <h3>Alunos acompanhados</h3>
+        <table>
+          <thead><tr><th>Nome</th><th>Turma</th><th>Frequência</th><th>Alertas</th><th></th></tr></thead>
+          <tbody id="alunos-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PERFIL DO ALUNO -->
+    <div class="view" id="view-perfil">
+      <button class="back-link" onclick="mudarView('alunos')">← Voltar para Alunos</button>
+      <div class="student-head">
+        <div>
+          <div class="name" id="perfil-nome">—</div>
+          <div class="tags" id="perfil-tags"></div>
+        </div>
+        <button class="btn-fill" onclick="abrirModalEncaminhar()">+ Novo encaminhamento</button>
+      </div>
+
+      <div class="tabs" id="perfil-tabs"></div>
+      <div id="perfil-conteudo"></div>
+    </div>
+
+    <!-- ENCAMINHAMENTOS -->
+    <div class="view" id="view-encaminhamentos">
+      <div class="panel">
+        <h3>Encaminhamentos da rede</h3>
+        <table>
+          <thead><tr><th>Aluno</th><th>De</th><th>Para</th><th>Motivo</th><th>Urgência</th><th>Status</th></tr></thead>
+          <tbody id="enc-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MENSAGENS -->
+    <div class="view" id="view-mensagens">
+      <div class="panel">
+        <h3>Conversas recentes</h3>
+        <table><thead><tr><th>Com</th><th>Sobre</th><th>Última mensagem</th></tr></thead>
+        <tbody>
+          <tr><td>Profa. Renata (Português)</td><td>Ana Beatriz Souza</td><td>"Melhorou a participação essa semana."</td></tr>
+          <tr><td>Enf. Marcos</td><td>Lucas Martins</td><td>"Bombinha de asma reposta na sala de saúde."</td></tr>
+          <tr><td>Coordenação</td><td>Gabriel Ferreira</td><td>"Reunião com responsáveis marcada p/ sexta."</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- RELATORIOS -->
+    <div class="view" id="view-relatorios">
+      <div class="cards-row">
+        <div class="stat-card"><div class="num">92%</div><div class="lbl">Frequência média geral</div></div>
+        <div class="stat-card warn"><div class="num">7</div><div class="lbl">Alunos em alerta ativo</div></div>
+        <div class="stat-card"><div class="num">14</div><div class="lbl">Encaminhamentos no mês</div></div>
+        <div class="stat-card"><div class="num">2.3 dias</div><div class="lbl">Tempo médio de resposta</div></div>
+      </div>
+      <div class="panel">
+        <h3>Indicadores por turma</h3>
+        <table><thead><tr><th>Turma</th><th>Frequência</th><th>Alertas psicossociais</th><th>Alertas de saúde</th></tr></thead>
+        <tbody>
+          <tr><td>6º A</td><td>94%</td><td>1</td><td>2</td></tr>
+          <tr><td>7º B</td><td>88%</td><td>3</td><td>1</td></tr>
+          <tr><td>9º C</td><td>91%</td><td>2</td><td>0</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- AUDITORIA -->
+    <div class="view" id="view-auditoria">
+      <div class="panel">
+        <h3>Log de acessos a registros sensíveis</h3>
+        <table><thead><tr><th>Quem acessou</th><th>Perfil</th><th>Aluno</th><th>Aba</th><th>Quando</th></tr></thead>
+        <tbody>
+          <tr><td>Renata Alves</td><td>Professor(a)</td><td>Ana Beatriz Souza</td><td>Visão Geral</td><td class="mono">06/07 14:22</td></tr>
+          <tr><td>Marcos Lima</td><td>Saúde</td><td>Lucas Martins</td><td>Saúde</td><td class="mono">06/07 10:03</td></tr>
+          <tr><td>Juliana Prado</td><td>Psicóloga</td><td>Gabriel Ferreira</td><td>Psicossocial</td><td class="mono">05/07 16:47</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NOVO ENCAMINHAMENTO -->
+<div class="modal-overlay" id="modal-encaminhar">
+  <div class="modal">
+    <h3>Novo encaminhamento</h3>
+    <label>Aluno</label>
+    <input type="text" id="enc-aluno" disabled>
+    <label>Encaminhar para</label>
+    <select id="enc-para">
+      <option>Psicóloga escolar</option>
+      <option>Profissional de saúde</option>
+      <option>Coordenação</option>
+      <option>Professor(a) titular</option>
+    </select>
+    <label>Motivo</label>
+    <select id="enc-urgencia">
+      <option>Rotina</option>
+      <option>Atenção</option>
+      <option>Urgente</option>
+    </select>
+    <label>Descrição</label>
+    <input type="text" id="enc-desc" placeholder="Descreva brevemente o motivo...">
+    <button class="primary-btn" onclick="confirmarEncaminhamento()">Enviar encaminhamento</button>
+    <button class="cancel-link" onclick="fecharModal()">Cancelar</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* =====================================================================
+   CONFIGURAÇÃO DO SUPABASE
+   =====================================================================
+   - SUPABASE_URL e SUPABASE_ANON_KEY: pegue em Project Settings > API.
+   - A ANON KEY é pública por natureza (protegida pelas policies de RLS
+     que você criou no supabase_schema.sql) — pode ficar neste arquivo
+     e ir para o GitHub sem problema.
+   - NUNCA coloque aqui a "service_role key". Essa chave ignora o RLS
+     inteiro e precisa ficar só em ambiente de servidor (nunca em site
+     estático / GitHub Pages / repositório público).
+   ===================================================================== */
+const SUPABASE_URL = "COLE_AQUI_A_URL_DO_SEU_PROJETO";
+const SUPABASE_ANON_KEY = "COLE_AQUI_A_ANON_KEY";
+
+let supa = null;
+const configurado = !SUPABASE_URL.startsWith("COLE_AQUI") && !SUPABASE_ANON_KEY.startsWith("COLE_AQUI");
+if(configurado){
+  supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.getElementById('config-note').textContent =
+      "⚠ Supabase ainda não configurado neste arquivo (SUPABASE_URL / SUPABASE_ANON_KEY). Login/cadastro reais ficam desativados até isso ser preenchido — use os botões de demonstração abaixo.";
+  });
+}
+
+function irPara(tela){
+  document.querySelectorAll('.auth-tela').forEach(t=>t.style.display='none');
+  document.getElementById('tela-'+tela).style.display='block';
+}
+
+function mostrarErro(id, texto){
+  const el = document.getElementById(id);
+  el.textContent = texto;
+  el.style.display = 'block';
+}
+function mostrarOk(id, texto){
+  const el = document.getElementById(id);
+  el.textContent = texto;
+  el.style.display = 'block';
+}
+
+/* ---------- LOGIN REAL ---------- */
+async function fazerLogin(){
+  document.getElementById('login-erro').style.display='none';
+  if(!configurado) return mostrarErro('login-erro','Sistema ainda não conectado ao Supabase. Use um dos acessos de demonstração abaixo.');
+
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  if(!email || !senha) return mostrarErro('login-erro','Preencha e-mail e senha.');
+
+  const { data, error } = await supa.auth.signInWithPassword({ email, password: senha });
+  if(error) return mostrarErro('login-erro', 'Não foi possível entrar: e-mail ou senha inválidos.');
+
+  const { data: perfil, error: erroPerfil } = await supa
+    .from('profiles').select('*').eq('id', data.user.id).single();
+
+  if(erroPerfil || !perfil) return mostrarErro('login-erro','Perfil não encontrado. Fale com a coordenação.');
+  if(!perfil.ativo) return mostrarErro('login-erro','Sua conta ainda não foi aprovada pela coordenação.');
+
+  entrarComPerfilReal(perfil);
+}
+
+/* ---------- CADASTRO REAL ---------- */
+async function fazerCadastro(){
+  document.getElementById('cadastro-erro').style.display='none';
+  document.getElementById('cadastro-ok').style.display='none';
+  if(!configurado) return mostrarErro('cadastro-erro','Sistema ainda não conectado ao Supabase.');
+
+  const nome = document.getElementById('cad-nome').value.trim();
+  const email = document.getElementById('cad-email').value.trim();
+  const senha = document.getElementById('cad-senha').value;
+  const papel = document.getElementById('cad-papel').value;
+
+  if(!nome || !email || !senha) return mostrarErro('cadastro-erro','Preencha todos os campos.');
+  if(senha.length < 8) return mostrarErro('cadastro-erro','A senha precisa ter pelo menos 8 caracteres.');
+
+  const { data, error } = await supa.auth.signUp({ email, password: senha });
+  if(error) return mostrarErro('cadastro-erro', 'Não foi possível criar a conta: ' + error.message);
+
+  // Cria o perfil pendente (ativo=false) — só a coordenação pode ativar depois
+  const { error: erroPerfil } = await supa.from('profiles').insert({
+    id: data.user.id, nome, papel, ativo: false
+  });
+  if(erroPerfil) return mostrarErro('cadastro-erro','Conta criada, mas houve um erro ao registrar o perfil. Fale com a coordenação.');
+
+  mostrarOk('cadastro-ok','Solicitação enviada! Confirme seu e-mail e aguarde a aprovação da coordenação para acessar o sistema.');
+}
+
+/* ---------- RECUPERAÇÃO DE SENHA REAL ---------- */
+async function enviarRecuperacao(){
+  document.getElementById('recuperar-erro').style.display='none';
+  document.getElementById('recuperar-ok').style.display='none';
+  if(!configurado) return mostrarErro('recuperar-erro','Sistema ainda não conectado ao Supabase.');
+
+  const email = document.getElementById('rec-email').value.trim();
+  if(!email) return mostrarErro('recuperar-erro','Informe seu e-mail.');
+
+  // redireciona para reset-senha.html, hospedado no mesmo GitHub Pages
+  const redirectUrl = window.location.origin + window.location.pathname.replace('elo-escolar.html','reset-senha.html');
+
+  const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
+  // Por segurança, sempre mostramos a mesma mensagem, exista ou não o e-mail cadastrado
+  // (evita que alguém descubra quais e-mails têm conta no sistema).
+  mostrarOk('recuperar-ok','Se este e-mail estiver cadastrado, um link de redefinição foi enviado.');
+}
+
+/* ---------- ENTRAR COM PERFIL REAL (vindo do Supabase) ---------- */
+function entrarComPerfilReal(perfil){
+  sessao = perfil.papel;
+  perfis[sessao].nome = perfil.nome; // sincroniza nome real no objeto de exibição
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').classList.add('active');
+  aplicarSessaoNaTela();
+}
+
+const perfis = {
+  professor:   {label:"Professor(a)", nome:"Renata Alves", cor:"#E8B472"},
+  psicologa:   {label:"Psicóloga escolar", nome:"Juliana Prado", cor:"#8FB5AB"},
+  saude:       {label:"Profissional de saúde", nome:"Marcos Lima", cor:"#E29A82"},
+  coordenacao: {label:"Coordenação / Gestão", nome:"Fernanda Costa", cor:"#B7C6E8"},
+};
+
+// visibilidade: quais perfis veem a aba completa
+const visibilidade = {
+  pedagogico:   ["professor","coordenacao"],
+  psicossocial: ["psicologa","coordenacao"],
+  saude:        ["saude","coordenacao"],
+  visaogeral:   ["professor","psicologa","saude","coordenacao"],
+  timeline:     ["professor","psicologa","saude","coordenacao"],
+  encaminhamentos: ["professor","psicologa","saude","coordenacao"],
+};
+
+const alunos = [
+  {
+    id:1, nome:"Ana Beatriz Souza", turma:"7º B", freq:"88%",
+    alerta:{tipo:"psicossocial", nivel:"alert", texto:"Queda de participação e isolamento"},
+    pedagogico:"Notas estáveis em Matemática (7,5) e Português (8,0). Professora relata queda de participação nas últimas 3 semanas.",
+    psicossocial:"Relato de possível conflito familiar. Aluna reservada em atendimento de 28/06. Acompanhamento semanal iniciado.",
+    saude: null,
+    timeline:[
+      {autor:"Renata Alves", papel:"professor", data:"04/07", texto:"Aluna não entregou atividade de casa pela 2ª vez.", sigiloso:false},
+      {autor:"Juliana Prado", papel:"psicologa", data:"28/06", texto:"Atendimento individual — conteúdo sigiloso registrado no prontuário psicológico.", sigiloso:true},
+      {autor:"Fernanda Costa", papel:"coordenacao", data:"25/06", texto:"Contato com responsável agendado.", sigiloso:false},
+    ]
+  },
+  {
+    id:2, nome:"Lucas Martins", turma:"6º A", freq:"94%",
+    alerta:{tipo:"saude", nivel:"pending", texto:"Asma — uso de bombinha na escola"},
+    pedagogico:"Bom desempenho geral. Ausências pontuais associadas a crises de asma.",
+    psicossocial:null,
+    saude:"Diagnóstico de asma leve. Bombinha de resgate disponível na sala de saúde. Última crise registrada em 30/06.",
+    timeline:[
+      {autor:"Marcos Lima", papel:"saude", data:"30/06", texto:"Episódio de falta de ar controlado com bombinha. Responsável avisado.", sigiloso:false},
+      {autor:"Renata Alves", papel:"professor", data:"01/07", texto:"Aluno participou normalmente da aula após o episódio.", sigiloso:false},
+    ]
+  },
+  {
+    id:3, nome:"Gabriel Ferreira", turma:"9º C", freq:"91%",
+    alerta:{tipo:"encaminhamento", nivel:"info", texto:"Encaminhamento em análise pela coordenação"},
+    pedagogico:"Desempenho regular, dificuldade recorrente em Matemática.",
+    psicossocial:"Sem registros psicossociais até o momento.",
+    saude:null,
+    timeline:[
+      {autor:"Fernanda Costa", papel:"coordenacao", data:"05/07", texto:"Reunião com responsáveis marcada para sexta-feira.", sigiloso:false},
+    ]
+  },
+];
+
+let sessao = null; // perfil atual
+let alunoAtual = null;
+
+function entrarDemo(perfilKey){
+  sessao = perfilKey;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').classList.add('active');
+  aplicarSessaoNaTela();
+}
+
+function aplicarSessaoNaTela(){
+  const p = perfis[sessao];
+  document.getElementById('who-name').textContent = p.nome;
+  document.getElementById('who-role').textContent = p.label;
+  document.getElementById('who-initials').textContent = p.nome.split(' ').map(w=>w[0]).slice(0,2).join('');
+  document.getElementById('who-initials').style.background = p.cor+'55';
+  document.getElementById('who-initials').style.color = p.cor;
+
+  // Auditoria só pra coordenação
+  document.getElementById('nav-auditoria').style.display = (sessao==='coordenacao') ? 'flex' : 'none';
+
+  montarPainel();
+  montarAlunos();
+  montarEncaminhamentos();
+  mudarView('painel');
+}
+
+async function sair(){
+  if(supa) await supa.auth.signOut();
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-screen').classList.remove('active');
+  irPara('login');
+}
+
+document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
+  btn.addEventListener('click', ()=> mudarView(btn.dataset.view));
+});
+
+function mudarView(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navBtn = document.querySelector('.nav-item[data-view="'+view+'"]');
+  if(navBtn) navBtn.classList.add('active');
+
+  const titulos = {
+    painel:["Painel","Visão geral de hoje"],
+    alunos:["Alunos","Todos os alunos que você acompanha"],
+    perfil:["Perfil do aluno","Registro compartilhado entre profissionais"],
+    encaminhamentos:["Encaminhamentos","Fluxo entre professores, psicologia, saúde e coordenação"],
+    mensagens:["Mensagens","Conversas diretas entre profissionais"],
+    relatorios:["Relatórios","Indicadores agregados da escola"],
+    auditoria:["Auditoria","Quem acessou o quê, e quando"],
+  };
+  document.getElementById('view-title').textContent = titulos[view][0];
+  document.getElementById('view-sub').textContent = titulos[view][1];
+}
+
+function chipAlerta(alerta){
+  if(!alerta) return '<span class="chip ok">Sem alertas</span>';
+  const map = {alert:"alert", pending:"pending", info:"info"};
+  return `<span class="chip ${map[alerta.nivel]}">${alerta.texto}</span>`;
+}
+
+function montarPainel(){
+  const cards = document.getElementById('painel-cards');
+  cards.innerHTML = `
+    <div class="stat-card"><div class="num">${alunos.length}</div><div class="lbl">Alunos na sua rede</div></div>
+    <div class="stat-card warn"><div class="num">${alunos.filter(a=>a.alerta && a.alerta.nivel==='alert').length}</div><div class="lbl">Alertas ativos</div></div>
+    <div class="stat-card"><div class="num">${alunos.filter(a=>a.alerta && a.alerta.nivel==='pending').length}</div><div class="lbl">Pendências de saúde</div></div>
+    <div class="stat-card"><div class="num">3</div><div class="lbl">Mensagens não lidas</div></div>
+  `;
+
+  const pend = document.getElementById('painel-pendencias');
+  pend.innerHTML = alunos.filter(a=>a.alerta).map(a=>`
+    <tr class="clickable" onclick="abrirPerfil(${a.id})">
+      <td>${a.nome}</td>
+      <td>${a.alerta.tipo}</td>
+      <td>${a.alerta.texto}</td>
+      <td>${chipAlerta(a.alerta)}</td>
+    </tr>`).join('');
+
+  const tl = document.getElementById('painel-timeline');
+  const todosEventos = alunos.flatMap(a=>a.timeline.map(e=>({...e, aluno:a.nome})))
+    .filter(e => sessao==='coordenacao' || !e.sigiloso || e.papel===sessao)
+    .slice(0,5);
+  tl.innerHTML = todosEventos.map(renderTimelineItem).join('');
+}
+
+function montarAlunos(){
+  const tbody = document.getElementById('alunos-tbody');
+  tbody.innerHTML = alunos.map(a=>`
+    <tr class="clickable" onclick="abrirPerfil(${a.id})">
+      <td>${a.nome}</td>
+      <td>${a.turma}</td>
+      <td>${a.freq}</td>
+      <td>${chipAlerta(a.alerta)}</td>
+      <td><button class="btn-outline" onclick="event.stopPropagation(); abrirPerfil(${a.id})">Abrir</button></td>
+    </tr>`).join('');
+}
+
+function montarEncaminhamentos(){
+  const dados = [
+    {aluno:"Ana Beatriz Souza", de:"Professor(a)", para:"Psicóloga escolar", motivo:"Isolamento social", urg:"Atenção", status:"Em andamento"},
+    {aluno:"Lucas Martins", de:"Saúde", para:"Coordenação", motivo:"Ajuste de plano de emergência (asma)", urg:"Rotina", status:"Concluído"},
+    {aluno:"Gabriel Ferreira", de:"Coordenação", para:"Professor(a)", motivo:"Reforço em Matemática", urg:"Rotina", status:"Pendente"},
+  ];
+  const map = {"Em andamento":"pending","Concluído":"ok","Pendente":"info"};
+  document.getElementById('enc-tbody').innerHTML = dados.map(d=>`
+    <tr><td>${d.aluno}</td><td>${d.de}</td><td>${d.para}</td><td>${d.motivo}</td><td>${d.urg}</td>
+    <td><span class="chip ${map[d.status]}">${d.status}</span></td></tr>`).join('');
+}
+
+function corPapel(papel){ return perfis[papel] ? perfis[papel].cor : '#999'; }
+
+function renderTimelineItem(e){
+  const escondido = e.sigiloso && sessao!==e.papel && sessao!=='coordenacao';
+  return `<li>
+    <div class="tico" style="background:${corPapel(e.papel)}">${perfis[e.papel].label[0]}</div>
+    <div class="body">
+      <div class="row1"><span class="author">${e.autor} ${e.aluno? '· '+e.aluno:''}</span><span class="date">${e.data}</span></div>
+      <div class="txt ${escondido?'sigiloso':''}">${escondido ? 'Registro sigiloso — visível apenas ao autor e à coordenação.' : e.texto}</div>
+    </div>
+  </li>`;
+}
+
+/* ---------------- PERFIL DO ALUNO ---------------- */
+function abrirPerfil(id){
+  alunoAtual = alunos.find(a=>a.id===id);
+  document.getElementById('perfil-nome').textContent = alunoAtual.nome;
+  document.getElementById('perfil-tags').innerHTML = `
+    <span class="chip info">${alunoAtual.turma}</span>
+    <span class="chip ok">Frequência ${alunoAtual.freq}</span>
+    ${alunoAtual.alerta ? chipAlerta(alunoAtual.alerta) : ''}
+  `;
+
+  const abas = [
+    {id:"visaogeral", label:"Visão Geral"},
+    {id:"pedagogico", label:"Pedagógico"},
+    {id:"psicossocial", label:"Psicossocial"},
+    {id:"saude", label:"Saúde"},
+    {id:"timeline", label:"Linha do Tempo"},
+  ];
+  document.getElementById('perfil-tabs').innerHTML = abas.map((ab,i)=>{
+    const podeVer = visibilidade[ab.id].includes(sessao);
+    return `<button class="tab-btn ${i===0?'active':''}" ${podeVer?'':''} onclick="mostrarAba('${ab.id}', this)">${ab.label}</button>`;
+  }).join('');
+
+  mostrarAba('visaogeral', document.querySelector('.tab-btn'));
+  mudarView('perfil');
+}
+
+function mostrarAba(id, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+
+  const podeVer = visibilidade[id].includes(sessao);
+  const el = document.getElementById('perfil-conteudo');
+
+  if(!podeVer){
+    el.innerHTML = `<div class="locked-box"><b>Conteúdo restrito</b>Esta aba é visível apenas para os perfis responsáveis por este tipo de informação, conforme as regras de privacidade da escola.</div>`;
+    return;
+  }
+
+  let html = '';
+  if(id==='visaogeral'){
+    html = `<div class="panel"><h3>Resumo</h3><p>${alunoAtual.nome}, ${alunoAtual.turma}. Frequência atual de ${alunoAtual.freq}.</p>
+    ${alunoAtual.alerta ? `<p><b>Alerta ativo:</b> ${alunoAtual.alerta.texto} — detalhes completos disponíveis para o profissional responsável.</p>` : '<p>Nenhum alerta ativo no momento.</p>'}
+    </div>`;
+  } else if(id==='pedagogico'){
+    html = `<div class="panel"><h3>Registro pedagógico</h3><p>${alunoAtual.pedagogico || 'Sem registros.'}</p></div>`;
+  } else if(id==='psicossocial'){
+    html = `<div class="panel"><h3>Registro psicossocial</h3><p>${alunoAtual.psicossocial || 'Sem registros.'}</p></div>`;
+  } else if(id==='saude'){
+    html = `<div class="panel"><h3>Registro de saúde</h3><p>${alunoAtual.saude || 'Sem registros.'}</p></div>`;
+  } else if(id==='timeline'){
+    html = `<div class="panel"><h3>Linha do tempo compartilhada</h3><ul class="timeline">${alunoAtual.timeline.map(renderTimelineItem).join('')}</ul></div>`;
+  }
+  el.innerHTML = html;
+}
+
+/* ---------------- MODAL ENCAMINHAMENTO ---------------- */
+function abrirModalEncaminhar(){
+  document.getElementById('enc-aluno').value = alunoAtual.nome;
+  document.getElementById('modal-encaminhar').classList.add('active');
+}
+function fecharModal(){
+  document.getElementById('modal-encaminhar').classList.remove('active');
+}
+function confirmarEncaminhamento(){
+  fecharModal();
+  mudarView('encaminhamentos');
+  const tbody = document.getElementById('enc-tbody');
+  const para = document.getElementById('enc-para').value;
+  const urg = document.getElementById('enc-urgencia').value;
+  const desc = document.getElementById('enc-desc').value || '(sem descrição)';
+  const linha = document.createElement('tr');
+  linha.innerHTML = `<td>${alunoAtual.nome}</td><td>${perfis[sessao].label}</td><td>${para}</td><td>${desc}</td><td>${urg}</td><td><span class="chip pending">Pendente</span></td>`;
+  tbody.prepend(linha);
+}
+</script>
 </body>
 </html>
